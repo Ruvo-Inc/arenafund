@@ -1,0 +1,480 @@
+/**
+ * Homepage Mobile-First Responsive Styles
+ * Fixes for Arena Fund homepage mobile responsiveness
+ */
+
+/* ===== MARKETING PAGE CONTAINER ===== */
+.marketing-page {
+  min-height: 100vh;
+  background-color: var(--color-background);
+}
+
+/* ===== HERO SECTION ===== */
+.marketing-hero {
+  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-gray-50) 100%);
+  padding: var(--spacing-8) var(--spacing-4) var(--spacing-16);
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .marketing-hero {
+    padding: var(--spacing-12) var(--spacing-6) var(--spacing-20);
+  }
+}
+
+.marketing-hero > div {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 0 var(--spacing-4);
+}
+
+@media (min-width: 640px) {
+  .marketing-hero > div {
+    padding: 0 var(--spacing-6);
+  }
+}
+
+/* ===== HERO BADGE ===== */
+.marketing-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  background-color: var(--color-success-50);
+  border: 1px solid var(--color-success-200);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-success-700);
+  margin-bottom: var(--spacing-6);
+  animation: fadeInUp var(--duration-700) var(--ease-emphasized);
+}
+
+@media (min-width: 640px) {
+  .marketing-hero-badge {
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-8);
+  }
+}
+
+/* ===== HERO TITLE ===== */
+.marketing-hero-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--color-foreground);
+  margin-bottom: var(--spacing-6);
+  text-wrap: balance;
+  animation: fadeInUp var(--duration-700) var(--ease-emphasized) 0.1s both;
+}
+
+@media (min-width: 640px) {
+  .marketing-hero-title {
+    font-size: var(--font-size-4xl);
+    margin-bottom: var(--spacing-8);
+  }
+}
+
+@media (min-width: 768px) {
+  .marketing-hero-title {
+    font-size: var(--font-size-5xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .marketing-hero-title {
+    font-size: var(--font-size-6xl);
+  }
+}
+
+/* ===== HERO SUBTITLE ===== */
+.marketing-hero-subtitle {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--spacing-8);
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  animation: fadeInUp var(--duration-700) var(--ease-emphasized) 0.2s both;
+}
+
+@media (min-width: 640px) {
+  .marketing-hero-subtitle {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-12);
+  }
+}
+
+/* ===== HERO ACTIONS ===== */
+.marketing-hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-12);
+  animation: fadeInUp var(--duration-700) var(--ease-emphasized) 0.3s both;
+}
+
+@media (min-width: 640px) {
+  .marketing-hero-actions {
+    flex-direction: row;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-16);
+  }
+}
+
+/* Ensure buttons are touch-friendly on mobile */
+.marketing-hero-actions .btn,
+.marketing-hero-actions button {
+  min-height: 44px;
+  min-width: 44px;
+  width: 100%;
+  max-width: 280px;
+}
+
+@media (min-width: 640px) {
+  .marketing-hero-actions .btn,
+  .marketing-hero-actions button {
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* ===== RESPONSIVE SECTION IMPROVEMENTS ===== */
+
+/* Reduce excessive padding on mobile */
+.py-20 {
+  padding-top: var(--spacing-12);
+  padding-bottom: var(--spacing-12);
+}
+
+@media (min-width: 640px) {
+  .py-20 {
+    padding-top: var(--spacing-16);
+    padding-bottom: var(--spacing-16);
+  }
+}
+
+@media (min-width: 768px) {
+  .py-20 {
+    padding-top: var(--spacing-20);
+    padding-bottom: var(--spacing-20);
+  }
+}
+
+/* ===== MOBILE-OPTIMIZED GRIDS ===== */
+
+/* Key metrics grid - fix awkward spanning */
+.hero-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+  padding-top: var(--spacing-6);
+  border-top: 1px solid var(--color-border);
+  animation: fadeInUp var(--duration-700) var(--ease-emphasized) 0.4s both;
+}
+
+@media (min-width: 640px) {
+  .hero-metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-8);
+    padding-top: var(--spacing-8);
+  }
+}
+
+/* Feature cards - single column on mobile */
+.feature-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+}
+
+@media (min-width: 768px) {
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-8);
+  }
+}
+
+@media (min-width: 1024px) {
+  .feature-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Process steps - single column on mobile */
+.process-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+}
+
+@media (min-width: 768px) {
+  .process-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-8);
+  }
+}
+
+/* Success stories - single column on mobile */
+.success-stories-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+}
+
+@media (min-width: 768px) {
+  .success-stories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-8);
+  }
+}
+
+@media (min-width: 1024px) {
+  .success-stories-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Investment access - single column on mobile */
+.investment-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+}
+
+@media (min-width: 768px) {
+  .investment-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-8);
+    margin-bottom: var(--spacing-12);
+  }
+}
+
+/* FAQ grid - single column on mobile */
+.faq-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-4);
+}
+
+@media (min-width: 768px) {
+  .faq-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-8);
+  }
+}
+
+/* ===== MOBILE TYPOGRAPHY IMPROVEMENTS ===== */
+
+/* Section titles - scale down on mobile */
+.section-title-responsive {
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-foreground);
+  margin-bottom: var(--spacing-4);
+  text-align: center;
+  text-wrap: balance;
+}
+
+@media (min-width: 640px) {
+  .section-title-responsive {
+    font-size: var(--font-size-3xl);
+  }
+}
+
+@media (min-width: 768px) {
+  .section-title-responsive {
+    font-size: var(--font-size-4xl);
+  }
+}
+
+/* Section subtitles - improve mobile readability */
+.section-subtitle-responsive {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-muted-foreground);
+  text-align: center;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .section-subtitle-responsive {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (min-width: 768px) {
+  .section-subtitle-responsive {
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* ===== MOBILE-OPTIMIZED CARDS ===== */
+
+/* Ensure cards are touch-friendly */
+.mobile-card {
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  transition: all var(--transition-base);
+  min-height: 44px;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .mobile-card {
+    padding: var(--spacing-8);
+    border-radius: var(--radius-xl);
+  }
+}
+
+.mobile-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+@media (hover: none) {
+  .mobile-card:hover {
+    transform: none;
+  }
+  
+  .mobile-card:active {
+    transform: scale(0.98);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+/* ===== MOBILE CTA SECTIONS ===== */
+
+/* Final CTA section - mobile optimized */
+.final-cta-container {
+  max-width: 56rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.final-cta-card {
+  background-color: var(--color-gray-900);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-8);
+  color: var(--color-white);
+}
+
+@media (min-width: 768px) {
+  .final-cta-card {
+    border-radius: var(--radius-2xl);
+    padding: var(--spacing-12);
+  }
+}
+
+.final-cta-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  justify-content: center;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .final-cta-actions {
+    flex-direction: row;
+    gap: var(--spacing-4);
+  }
+}
+
+/* Ensure CTA buttons are touch-friendly */
+.final-cta-actions .btn,
+.final-cta-actions button {
+  min-height: 44px;
+  min-width: 44px;
+  width: 100%;
+  max-width: 200px;
+}
+
+@media (min-width: 640px) {
+  .final-cta-actions .btn,
+  .final-cta-actions button {
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+
+/* Focus indicators for mobile */
+@media (hover: none) {
+  .focus-visible:focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .marketing-hero-badge,
+  .marketing-hero-title,
+  .marketing-hero-subtitle,
+  .marketing-hero-actions,
+  .hero-metrics-grid {
+    animation: none;
+  }
+}
+
+/* ===== TOUCH IMPROVEMENTS ===== */
+
+/* Ensure all interactive elements meet touch target requirements */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Add touch feedback for mobile */
+@media (hover: none) {
+  .interactive-element:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease-out;
+  }
+}
+
+/* ===== MOBILE NAVIGATION SPACING ===== */
+
+/* Add proper spacing for mobile navigation */
+.mobile-content-spacing {
+  padding-top: var(--spacing-4);
+}
+
+@media (min-width: 768px) {
+  .mobile-content-spacing {
+    padding-top: 0;
+  }
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+
+/* Optimize animations for mobile */
+@media (max-width: 767px) {
+  * {
+    animation-duration: 0.3s !important;
+  }
+}
+
+/* Optimize transforms for mobile performance */
+.mobile-optimized-transform {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.mobile-optimized-transform:hover {
+  will-change: auto;
+}

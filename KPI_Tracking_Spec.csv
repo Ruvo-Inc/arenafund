@@ -1,0 +1,36 @@
+Category,KPI,Definition,Target_90d,Target_12m,Primary_Source,Owner,Event_or_Query,Reporting_Frequency
+Capital and deal flow,Deals closed,Number of SPVs or allocations closed,2,6,Airtable + internal log,Mani,bq:deals_closed,weekly
+Capital and deal flow,Average SPV size,Average capital raised per deal USD,1000000,1500000,Bank custodian export + Airtable,Mani,bq:spv_avg_size,weekly
+Capital and deal flow,Capital raised total,Total capital raised USD,2000000,9000000,Bank custodian export + Airtable,Mani,bq:spv_total_capital,weekly
+Capital and deal flow,Time to close allocation,Median days from open to close,28,21,Airtable timestamps,Mani,bq:spv_median_days_to_close,weekly
+Capital and deal flow,Co-investor participation rate,Share of deals with named co-investor,0.5,0.7,Internal CRM,Mani,bq:coinvest_rate,monthly
+Top of funnel and diligence,Companies screened per month,Companies reviewed per month,80,120,CRM + sourcing sheet,Research,bq:companies_screened,monthly
+Top of funnel and diligence,Shortlist rate,Shortlisted ÷ screened,0.1,0.1,CRM,Research,bq:shortlist_rate,monthly
+Top of funnel and diligence,Buyer validation interviews,Avg interviews per shortlisted deal,6,8,Notion deal room,Research,bq:buyer_interviews_per_deal,monthly
+Top of funnel and diligence,Decision cycle,Days from intro to term sheet,21,14,CRM timestamps,Research,bq:decision_cycle_days,monthly
+Post-invest traction,Pilot starts within 60 days,Share of investments with pilot ≤60d,0.5,0.7,Founder updates + CRM,Platform,bq:pilot_60d_rate,monthly
+Post-invest traction,First paid PO within 120 days,Share with paid PO ≤120d,0.3,0.5,Founder updates + CRM,Platform,bq:po_120d_rate,monthly
+Post-invest traction,Markup within 12 months,Share of positions with markup in 12m,0,0.2,Cap table updates,Platform,bq:markup_12m_rate,quarterly
+Post-invest traction,Founder NPS,NPS from founders,50,60,Typeform,Platform,bq:founder_nps,quarterly
+Investor growth and conversion,Qualified investor leads per month,New qualified leads,40,80,GA4 + HubSpot,Growth,ga4:lead_submit,monthly
+Investor growth and conversion,Accredited investors onboarded,KYC completed investors,40,200,KYC vendor export,Ops,bq:kyc_completed_count,weekly
+Investor growth and conversion,Visit to lead conversion,Leads ÷ unique visits,0.03,0.05,GA4,Growth,ga4:lead_submit ÷ ga4:users,monthly
+Investor growth and conversion,Lead to accredited conversion,Accredited ÷ leads,0.25,0.35,HubSpot + KYC vendor,Growth,bq:lead_to_accred_rate,monthly
+Investor growth and conversion,Average accredited allocation,Avg check per accredited USD,25000,25000,Bank custodian export,Ops,bq:avg_check_accred,monthly
+Investor growth and conversion,Reg CF participants per deal,Participants per CF deal,75,150,CF partner export,Ops,bq:cf_participants_per_deal,per deal
+Audience and content,Newsletter subscribers,Subscribers,1000,5000,Mailchimp export,Growth,mailchimp:subscribers,weekly
+Audience and content,Open rate,Open rate share,0.4,0.45,Mailchimp,Growth,mailchimp:open_rate,campaign
+Audience and content,CTR,Click through rate,0.06,0.08,Mailchimp,Growth,mailchimp:ctr,campaign
+Audience and content,LinkedIn followers,Followers,1500,5000,LinkedIn page,Growth,linkedin:followers,weekly
+Audience and content,Events per quarter,Events hosted per quarter,1,2,Airtable events,Growth,bq:events_count,quarterly
+Website and reliability,Monthly uniques,Users per month,5000,15000,GA4 users,Eng,ga4:users,monthly
+Website and reliability,Organic share of traffic,Organic sessions ÷ total,0.35,0.5,GA4 default channel,Eng,ga4:organic_share,monthly
+Website and reliability,LCP p75,Largest Contentful Paint p75 seconds,2,2,GA4 Web Vitals,Eng,ga4:lcp_p75,monthly
+Website and reliability,CLS p75,Cumulative Layout Shift p75,0.1,0.1,GA4 Web Vitals,Eng,ga4:cls_p75,monthly
+Website and reliability,INP p75,Interaction to Next Paint p75 ms,200,200,GA4 Web Vitals,Eng,ga4:inp_p75,monthly
+Website and reliability,Uptime,Service availability share,0.999,0.999,Cloud Monitoring SLO,Eng,gcm:uptime,monthly
+Website and reliability,Client error rate,JS errors per session share,0.002,0.002,GA4 + Sentry,Eng,ga4:client_error_rate,monthly
+Ops and compliance,KYC approval time,Share approved ≤24h,0.9,0.9,KYC vendor,Ops,bq:kyc_24h_rate,monthly
+Ops and compliance,Doc turnaround to close,Median days to complete docs,3,3,Docusign export,Ops,bq:docs_median_days,monthly
+Ops and compliance,Sev-1 response,Median time to respond in hours,1,1,PagerDuty,Eng,pd:sev1_median_response,incident
+Ops and compliance,Data access reviews,Reviews completed per month,1,1,Security log,Eng,bq:access_reviews,monthly

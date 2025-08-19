@@ -1,0 +1,70 @@
+# Cloud Build pipeline: build container and deploy to Cloud Run
+# Usage:
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_REGION=us-central1,_REPO=web-containers,_SERVICE=arenafund-web,_PROJECT=arenafund
+
+substitutions:
+  _REGION: us-central1
+  _REPO: web-containers
+  _SERVICE: arenafund-web
+  _PROJECT: arenafund
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$_PROJECT/$_REPO/$_SERVICE:latest'
+      - '.'
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - '$_REGION-docker.pkg.dev/$_PROJECT/$_REPO/$_SERVICE:latest'
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - '$_SERVICE'
+      - '--image'
+      - '$_REGION-docker.pkg.dev/$_PROJECT/$_REPO/$_SERVICE:latest'
+      - '--region'
+      - '$_REGION'
+      - '--platform'
+      - managed
+      - '--allow-unauthenticated'
+      - '--service-account'
+      - 'app-runtime@$_PROJECT.iam.gserviceaccount.com'
+      - '--add-cloudsql-instances'
+      - '$_PROJECT:$_REGION:arenafund-pg'
+      - '--set-env-vars'
+      - 'CLOUD_SQL_INSTANCE_CONNECTION_NAME=$_PROJECT:$_REGION:arenafund-pg'
+      - '--set-secrets'
+      - 'NEXT_PUBLIC_RECAPTCHA_SITE_KEY=NEXT_PUBLIC_RECAPTCHA_SITE_KEY:latest'
+      - '--set-secrets'
+      - 'RECAPTCHA_SECRET_KEY=RECAPTCHA_SECRET_KEY:latest'
+      - '--set-secrets'
+      - 'GMAIL_CLIENT_EMAIL=GMAIL_CLIENT_EMAIL:latest'
+      - '--set-secrets'
+      - 'GMAIL_PRIVATE_KEY=GMAIL_PRIVATE_KEY:latest'
+      - '--set-secrets'
+      - 'GMAIL_IMPERSONATED_USER=GMAIL_IMPERSONATED_USER:latest'
+      - '--set-secrets'
+      - 'ADMIN_ALERT_EMAILS=ADMIN_ALERT_EMAILS:latest'
+      - '--set-secrets'
+      - 'DB_HOST=DB_HOST:latest'
+      - '--set-secrets'
+      - 'DB_PORT=DB_PORT:latest'
+      - '--set-secrets'
+      - 'DB_NAME=DB_NAME:latest'
+      - '--set-secrets'
+      - 'DB_USER=DB_USER:latest'
+      - '--set-secrets'
+      - 'DB_PASSWORD=DB_PASSWORD:latest'
+images:
+  - '$_REGION-docker.pkg.dev/$_PROJECT/$_REPO/$_SERVICE:latest'
