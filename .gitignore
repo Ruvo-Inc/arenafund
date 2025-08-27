@@ -15,6 +15,7 @@ yarn-debug.log*
 yarn-error.log*
 .eslintcache
 *.log
+.kiro/
 
 # Firebase admin key (do not commit)
 arenafund-firebase-adminsdk.json

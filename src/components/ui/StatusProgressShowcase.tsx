@@ -5,7 +5,7 @@ import StatusIndicator from './StatusIndicator';
 import ProgressBar from './ProgressBar';
 import ProgressSteps from './ProgressSteps';
 import ProgressCircle from './ProgressCircle';
-import LoadingSpinner from './LoadingSpinner';
+import { LoadingSpinner } from './LoadingSpinner';
 
 const StatusProgressShowcase = () => {
   const [progress, setProgress] = useState(0);
@@ -284,21 +284,21 @@ const StatusProgressShowcase = () => {
         <div className="space-y-6">
           <h3 className="text-lg font-medium text-gray-800">Size Variations</h3>
           <div className="flex items-center space-x-8">
-            <LoadingSpinner size="xs" showLabel label="Extra Small" />
+            <LoadingSpinner size="sm" showLabel label="Small" />
             <LoadingSpinner size="sm" showLabel label="Small" />
             <LoadingSpinner size="md" showLabel label="Medium" />
             <LoadingSpinner size="lg" showLabel label="Large" />
-            <LoadingSpinner size="xl" showLabel label="Extra Large" />
+            <LoadingSpinner size="lg" showLabel label="Large" />
           </div>
         </div>
 
-        {/* Speed Variations */}
+        {/* Variant Styles */}
         <div className="space-y-6">
-          <h3 className="text-lg font-medium text-gray-800">Speed Variations</h3>
+          <h3 className="text-lg font-medium text-gray-800">Variant Styles</h3>
           <div className="flex items-center space-x-8">
-            <LoadingSpinner speed="slow" showLabel label="Slow" />
-            <LoadingSpinner speed="normal" showLabel label="Normal" />
-            <LoadingSpinner speed="fast" showLabel label="Fast" />
+            <LoadingSpinner variant="default" showLabel label="Default" />
+            <LoadingSpinner variant="primary" showLabel label="Primary" />
+            <LoadingSpinner variant="secondary" showLabel label="Secondary" />
           </div>
         </div>
       </section>

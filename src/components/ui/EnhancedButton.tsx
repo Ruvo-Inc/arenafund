@@ -1,272 +1,165 @@
 'use client';
 
-import React, { forwardRef, ReactNode, useCallback, useMemo, useEffect } from 'react';
-import { motion, HTMLMotionProps, useMotionValue, useTransform } from 'framer-motion';
+import React, { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useInteractionFeedback, useRippleEffect } from '@/hooks/useInteractionFeedback';
-import { usePerformance } from '@/hooks/usePerformance';
-import { withErrorBoundary } from './ErrorBoundary';
 
-interface EnhancedButtonProps extends Omit<HTMLMotionProps<'button'>, 'size'> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'gradient' | 'cta';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+interface EnhancedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'cta';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   loading?: boolean;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
   fullWidth?: boolean;
-  hoverEffect?: 'lift' | 'scale' | 'glow' | 'gradient-shift' | 'magnetic' | 'none';
   ripple?: boolean;
-  hapticFeedback?: boolean;
-  gradientDirection?: 'horizontal' | 'vertical' | 'diagonal';
-  priority?: 'high' | 'medium' | 'low';
+  hoverEffect?: 'lift' | 'scale' | 'glow' | 'none';
+  children: React.ReactNode;
 }
 
-const EnhancedButton = forwardRef<HTMLButtonElement, EnhancedButtonProps>(
-  ({ 
-    className, 
-    variant = 'primary', 
-    size = 'md', 
-    loading = false,
-    disabled, 
-    leftIcon,
-    rightIcon,
-    fullWidth,
-    hoverEffect = 'lift',
-    ripple = false,
-    hapticFeedback = false,
-    gradientDirection = 'horizontal',
-    priority = 'medium',
-    children,
-    onClick,
-    ...props 
-  }, ref) => {
-    const { 
-      config: performanceConfig, 
-      startMeasurement, 
-      endMeasurement,
-      getOptimizedTransition,
-      shouldUseAdvancedAnimations 
-    } = usePerformance('EnhancedButton');
+interface Ripple {
+  id: number;
+  x: number;
+  y: number;
+}
 
-    const { state, handlers } = useInteractionFeedback({
-      disabled: disabled || loading,
-      loading,
-      hapticFeedback,
-    });
+export default function EnhancedButton({
+  className,
+  variant = 'primary',
+  size = 'md',
+  loading = false,
+  disabled,
+  leftIcon,
+  rightIcon,
+  fullWidth,
+  ripple = false,
+  hoverEffect = 'none',
+  children,
+  onClick,
+  ...props
+}: EnhancedButtonProps) {
+  const [ripples, setRipples] = useState<Ripple[]>([]);
+  const [isPressed, setIsPressed] = useState(false);
 
-    const { ripples, createRipple } = useRippleEffect();
+  const baseClasses = 'touch-target relative inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg overflow-hidden';
+  
+  const variants = {
+    primary: 'bg-primary text-white hover:bg-primary-hover active:bg-primary-active focus-visible:ring-ring shadow-sm',
+    secondary: 'bg-secondary text-foreground hover:bg-secondary-hover active:bg-secondary-active focus-visible:ring-ring border border-border shadow-sm',
+    outline: 'border border-border bg-background text-foreground hover:bg-secondary hover:text-foreground focus-visible:ring-ring shadow-sm',
+    ghost: 'text-foreground hover:bg-secondary hover:text-foreground focus-visible:ring-ring',
+    destructive: 'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 focus-visible:ring-error-500 shadow-sm',
+    success: 'bg-success-600 text-white hover:bg-success-700 active:bg-success-800 focus-visible:ring-success-500 shadow-sm',
+    cta: 'bg-gradient-to-r from-primary to-primary-hover text-white shadow-lg hover:shadow-xl',
+  };
+
+  const sizes = {
+    xs: 'h-8 px-2.5 text-xs gap-1 min-w-[44px]',
+    sm: 'h-10 px-3 text-sm gap-1.5 min-w-[44px]',
+    md: 'h-12 px-4 text-sm gap-2 min-w-[48px]',
+    lg: 'h-14 px-6 text-base gap-2 min-w-[56px]',
+    xl: 'h-16 px-8 text-lg gap-2.5 min-w-[64px]',
+  };
+
+  const hoverEffects = {
+    lift: 'hover:-translate-y-1 hover:shadow-lg',
+    scale: 'hover:scale-105',
+    glow: 'hover:shadow-lg hover:shadow-primary/25',
+    none: '',
+  };
+
+  const widthClass = fullWidth ? 'w-full' : '';
+  const loadingClass = loading ? 'cursor-not-allowed' : '';
+
+  const createRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    const button = event.currentTarget;
+    const rect = button.getBoundingClientRect();
     
-    // Advanced motion values for magnetic effect (only in high performance mode)
-    const mouseX = useMotionValue(0);
-    const mouseY = useMotionValue(0);
-    const magneticX = useTransform(mouseX, [-100, 100], [-8, 8]);
-    const magneticY = useTransform(mouseY, [-100, 100], [-8, 8]);
-
-    // Performance monitoring
-    useEffect(() => {
-      const measurementId = startMeasurement();
-      return () => {
-        if (measurementId) endMeasurement();
-      };
-    }, [startMeasurement, endMeasurement]);
-
-    const baseClasses = useMemo(() => 
-      'relative inline-flex items-center justify-center font-semibold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-xl overflow-hidden touch-target will-change-transform',
-      []
-    );
-    
-    const variants = useMemo(() => ({
-      primary: 'bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-700 focus-visible:ring-slate-500 shadow-lg hover:shadow-xl',
-      secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300 focus-visible:ring-slate-400 border border-slate-200 shadow-sm hover:shadow-md',
-      outline: 'border-2 border-slate-300 bg-transparent text-slate-700 hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-slate-400 shadow-sm hover:shadow-md',
-      ghost: 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-slate-400',
-      gradient: `bg-gradient-to-${gradientDirection === 'horizontal' ? 'r' : gradientDirection === 'vertical' ? 'b' : 'br'} from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 focus-visible:ring-blue-500 shadow-lg hover:shadow-xl`,
-      cta: 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 focus-visible:ring-blue-500 shadow-xl hover:shadow-2xl border border-blue-500/20',
-    }), [gradientDirection]);
-
-    const sizes = {
-      sm: 'h-10 px-4 text-sm gap-2 min-w-[44px]',
-      md: 'h-12 px-6 text-base gap-2 min-w-[48px]',
-      lg: 'h-14 px-8 text-lg gap-3 min-w-[56px]',
-      xl: 'h-16 px-10 text-xl gap-3 min-w-[64px]',
+    const newRipple: Ripple = {
+      id: Date.now(),
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
     };
 
-    const hoverEffects = {
-      lift: 'hover:-translate-y-1',
-      scale: 'hover:scale-105',
-      glow: 'hover:shadow-2xl hover:shadow-blue-500/25',
-      'gradient-shift': variant === 'gradient' || variant === 'cta' ? 'hover:bg-gradient-to-l' : '',
-      none: '',
-    };
+    setRipples(prev => [...prev, newRipple]);
 
-    const widthClass = fullWidth ? 'w-full' : '';
-    const loadingClass = loading ? 'cursor-not-allowed' : '';
+    setTimeout(() => {
+      setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+    }, 600);
+  }, []);
 
-    const handleClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-      if (ripple && !disabled && !loading) {
-        createRipple(event);
-      }
-      onClick?.(event);
-    }, [ripple, disabled, loading, createRipple, onClick]);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (ripple) {
+      createRipple(event);
+    }
+    onClick?.(event);
+  };
 
-    const handleMouseMove = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
-      if (hoverEffect === 'magnetic' && !disabled && !loading && shouldUseAdvancedAnimations()) {
-        const rect = event.currentTarget.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        mouseX.set(event.clientX - centerX);
-        mouseY.set(event.clientY - centerY);
-      }
-    }, [hoverEffect, disabled, loading, mouseX, mouseY, shouldUseAdvancedAnimations]);
+  const handleMouseDown = () => setIsPressed(true);
+  const handleMouseUp = () => setIsPressed(false);
+  const handleMouseLeave = () => setIsPressed(false);
 
-    const handleMouseLeave = useCallback(() => {
-      if (hoverEffect === 'magnetic') {
-        mouseX.set(0);
-        mouseY.set(0);
-      }
-      handlers.onMouseLeave();
-    }, [hoverEffect, mouseX, mouseY, handlers]);
-
-    const motionProps = useMemo(() => {
-      const baseTransition = getOptimizedTransition({
-        type: 'spring',
-        stiffness: 400,
-        damping: 30,
-        mass: 0.8
-      });
-
-      const baseProps = {
-        whileTap: { scale: 0.98 },
-        transition: baseTransition,
-      };
-
-      // Only use magnetic effect in high performance mode
-      if (hoverEffect === 'magnetic' && shouldUseAdvancedAnimations()) {
-        return {
-          ...baseProps,
-          style: { x: magneticX, y: magneticY },
-        };
-      }
-
-      // Simplified animations for reduced motion or battery mode
-      if (performanceConfig.reducedMotion || performanceConfig.mode === 'battery') {
-        return {
-          ...baseProps,
-          whileHover: hoverEffect === 'scale' ? { scale: 1.02 } : {},
-        };
-      }
-
-      return {
-        ...baseProps,
-        whileHover: 
-          hoverEffect === 'scale' ? { scale: 1.05 } : 
-          hoverEffect === 'lift' ? { y: -2 } : 
-          hoverEffect === 'glow' ? { boxShadow: '0 20px 40px rgba(59, 130, 246, 0.4)' } : {},
-      };
-    }, [hoverEffect, magneticX, magneticY, getOptimizedTransition, shouldUseAdvancedAnimations, performanceConfig]);
-
-    return (
-      <motion.button
-        className={cn(
-          baseClasses, 
-          variants[variant], 
-          sizes[size], 
-          hoverEffect !== 'magnetic' ? hoverEffects[hoverEffect] : hoverEffects.none,
-          widthClass,
-          loadingClass,
-          state.isPressed && 'transform scale-95',
-          className
-        )}
-        ref={ref}
-        disabled={disabled || loading}
-        onClick={handleClick}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        onMouseEnter={handlers.onMouseEnter}
-        onFocus={handlers.onFocus}
-        onBlur={handlers.onBlur}
-        onMouseDown={handlers.onMouseDown}
-        onMouseUp={handlers.onMouseUp}
-        onTouchStart={handlers.onTouchStart}
-        onTouchEnd={handlers.onTouchEnd}
-        {...motionProps}
-        {...props}
-      >
-        {/* Ripple Effect */}
-        {ripple && (
-          <div className="absolute inset-0 overflow-hidden rounded-xl">
+  return (
+    <motion.button
+      className={cn(
+        baseClasses,
+        variants[variant],
+        sizes[size],
+        hoverEffects[hoverEffect],
+        widthClass,
+        loadingClass,
+        isPressed && 'transform scale-95',
+        className
+      )}
+      disabled={disabled || loading}
+      onClick={handleClick}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      whileHover={!disabled && !loading ? { scale: 1.02 } : {}}
+      whileTap={!disabled && !loading ? { scale: 0.98 } : {}}
+      {...props}
+    >
+      {/* Ripple Effect */}
+      {ripple && (
+        <div className="absolute inset-0 overflow-hidden rounded-lg">
+          <AnimatePresence>
             {ripples.map((ripple) => (
-              <span
+              <motion.span
                 key={ripple.id}
-                className="absolute animate-ping rounded-full bg-white/30"
+                className="absolute rounded-full bg-white/30"
                 style={{
                   left: ripple.x - 10,
                   top: ripple.y - 10,
                   width: 20,
                   height: 20,
                 }}
+                initial={{ scale: 0, opacity: 1 }}
+                animate={{ scale: 4, opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
               />
             ))}
-          </div>
-        )}
+          </AnimatePresence>
+        </div>
+      )}
 
-        {/* Gradient Overlay for Enhanced Effects */}
-        {(variant === 'gradient' || variant === 'cta') && hoverEffect === 'gradient-shift' && (
-          <div className="absolute inset-0 bg-gradient-to-l from-purple-600 to-blue-600 opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-        )}
+      {/* Loading Spinner */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div
+            className="h-4 w-4 rounded-full border-2 border-current border-t-transparent"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          />
+        </div>
+      )}
 
-        {/* Loading Spinner */}
-        {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <motion.div 
-              className="h-5 w-5 border-2 border-current border-t-transparent rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            />
-          </div>
-        ) : (
-          <>
-            {leftIcon && (
-              <motion.span 
-                className="flex-shrink-0"
-                initial={{ x: -5, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-              >
-                {leftIcon}
-              </motion.span>
-            )}
-            <span className={loading ? 'invisible' : 'relative z-10'}>{children as ReactNode}</span>
-            {rightIcon && (
-              <motion.span 
-                className="flex-shrink-0 group-hover:translate-x-1 transition-transform"
-                initial={{ x: 5, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-              >
-                {rightIcon}
-              </motion.span>
-            )}
-          </>
-        )}
-
-        {/* Shine Effect for CTA variant */}
-        {variant === 'cta' && (
-          <div className="absolute inset-0 -top-2 -bottom-2 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
-        )}
-      </motion.button>
-    );
-  }
-);
-
-EnhancedButton.displayName = 'EnhancedButton';
-
-// Export both wrapped and unwrapped versions
-export { EnhancedButton };
-export default withErrorBoundary(EnhancedButton, {
-  fallback: (
-    <button className="inline-flex items-center justify-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">
-      Button Error
-    </button>
-  ),
-});
+      {/* Content */}
+      <div className={cn('flex items-center gap-2', loading && 'invisible')}>
+        {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
+        <span>{children}</span>
+        {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+      </div>
+    </motion.button>
+  );
+}

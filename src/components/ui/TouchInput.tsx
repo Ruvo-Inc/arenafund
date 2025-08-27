@@ -3,49 +3,35 @@
 import { InputHTMLAttributes, TextareaHTMLAttributes, SelectHTMLAttributes, forwardRef, ReactNode, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useInteractionFeedback, useFieldFeedback } from '@/hooks/useInteractionFeedback';
-import { useHapticFeedback } from '@/hooks/useGestures';
 
 interface TouchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   error?: string;
-  helperText?: string;
+  hint?: string;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'floating' | 'minimal';
+  variant?: 'default' | 'filled' | 'outlined';
   loading?: boolean;
-  success?: boolean;
-  showFeedback?: boolean;
   hapticFeedback?: boolean;
-  clearable?: boolean;
-  onClear?: () => void;
 }
 
 const TouchInput = forwardRef<HTMLInputElement, TouchInputProps>(
   ({ 
-    className, 
-    label, 
-    error, 
-    helperText, 
-    id, 
-    leftIcon, 
-    rightIcon, 
+    className,
+    label,
+    error,
+    hint,
+    leftIcon,
+    rightIcon,
     size = 'md',
     variant = 'default',
     loading = false,
-    success = false,
-    showFeedback = true,
-    hapticFeedback = false,
-    clearable = false,
     disabled,
-    value,
-    onFocus,
-    onBlur,
-    onChange,
-    onClear,
+    hapticFeedback = false,
+    id,
     ...props 
   }, ref) => {
-    const [hasValue, setHasValue] = useState(Boolean(value));
     const [isFocused, setIsFocused] = useState(false);
     const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -55,194 +41,96 @@ const TouchInput = forwardRef<HTMLInputElement, TouchInputProps>(
       hapticFeedback,
     });
 
-    const { triggerSelectionHaptic } = useHapticFeedback();
+    const { fieldState, setValid, setDirty, setTouched } = useFieldFeedback();
 
+    // Touch-optimized sizes with minimum 44px height
     const sizes = {
-      sm: 'h-10 px-3 text-sm min-h-[44px]',
-      md: 'h-12 px-4 text-base min-h-[48px]',
-      lg: 'h-14 px-5 text-lg min-h-[56px]',
+      sm: 'h-11 px-3 text-sm', // 44px minimum
+      md: 'h-12 px-4 text-base', // 48px comfortable
+      lg: 'h-14 px-5 text-lg', // 56px large
     };
 
-    const iconSizes = {
-      sm: 'h-4 w-4',
-      md: 'h-5 w-5',
-      lg: 'h-6 w-6',
+    const variants = {
+      default: 'border border-border bg-background',
+      filled: 'border-0 bg-muted',
+      outlined: 'border-2 border-border bg-transparent',
     };
 
-    const baseInputClasses = 'form-input-touch block w-full rounded-lg border bg-input text-foreground placeholder-muted-foreground shadow-sm transition-all focus:outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-50';
-
-    const getInputClasses = () => {
-      let classes = baseInputClasses;
-      
-      if (error) {
-        classes += ' border-error-500 focus:border-error-500 focus:ring-error-500 feedback-error';
-      } else if (success) {
-        classes += ' border-success-500 focus:border-success-500 focus:ring-success-500 feedback-success';
-      } else if (isFocused) {
-        classes += ' border-primary focus:border-primary focus:ring-primary';
-      } else {
-        classes += ' border-border hover:border-border-strong';
-      }
-
-      return classes;
-    };
-
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      setIsFocused(true);
-      if (hapticFeedback) {
-        triggerSelectionHaptic();
-      }
-      handlers.onFocus();
-      onFocus?.(e);
-    };
-
-    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-      setIsFocused(false);
-      handlers.onBlur();
-      onBlur?.(e);
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setHasValue(e.target.value.length > 0);
-      onChange?.(e);
-    };
-
-    const handleClear = () => {
-      setHasValue(false);
-      if (hapticFeedback) {
-        triggerSelectionHaptic();
-      }
-      onClear?.();
-    };
-
-    const renderFloatingLabel = () => {
-      if (variant !== 'floating' || !label) return null;
-      
-      return (
-        <label
-          htmlFor={inputId}
-          className={cn(
-            'floating-label absolute left-4 transition-all duration-200 pointer-events-none bg-input px-1',
-            (isFocused || hasValue) 
-              ? 'top-0 -translate-y-1/2 text-xs text-primary' 
-              : 'top-1/2 -translate-y-1/2 text-sm text-muted-foreground'
-          )}
-        >
-          {label}
-        </label>
-      );
-    };
-
-    const renderStandardLabel = () => {
-      if (variant === 'floating' || !label) return null;
-      
-      return (
-        <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-2">
-          {label}
-        </label>
-      );
-    };
-
-    const renderFeedback = () => {
-      if (!showFeedback) return null;
-
-      if (error) {
-        return <p className="text-sm text-error-600 mt-2">{error}</p>;
-      }
-      
-      if (success && !error) {
-        return <p className="text-sm text-success-600 mt-2">✓ Looks good!</p>;
-      }
-      
-      if (helperText && !error && !success) {
-        return <p className="text-sm text-muted-foreground mt-2">{helperText}</p>;
-      }
-
-      return null;
-    };
+    const focusStyles = isFocused ? 'ring-2 ring-ring ring-offset-2' : '';
+    const errorStyles = error ? 'border-destructive ring-destructive' : '';
 
     return (
-      <div className="space-y-1">
-        {renderStandardLabel()}
+      <div className="space-y-2">
+        {label && (
+          <label 
+            htmlFor={inputId}
+            className="block text-sm font-medium text-foreground"
+          >
+            {label}
+          </label>
+        )}
         
-        <div className={cn(
-          'relative touch-target',
-          variant === 'floating' && 'input-floating'
-        )}>
-          {/* Left Icon */}
+        <div className="relative">
           {leftIcon && (
-            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-              <span className={cn(
-                'text-muted-foreground transition-colors',
-                iconSizes[size],
-                isFocused && 'text-primary'
-              )}>
-                {leftIcon}
-              </span>
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+              {leftIcon}
             </div>
           )}
-
-          {/* Input Field */}
+          
           <input
             id={inputId}
-            ref={ref}
             className={cn(
-              getInputClasses(),
-              leftIcon && 'pl-12',
-              (rightIcon || loading || clearable) && 'pr-12',
+              'w-full rounded-lg transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed touch-target',
               sizes[size],
+              variants[variant],
+              focusStyles,
+              errorStyles,
+              leftIcon && 'pl-10',
+              rightIcon && 'pr-10',
+              loading && 'cursor-wait',
               className
             )}
+            ref={ref}
             disabled={disabled || loading}
-            value={value}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onChange={handleChange}
-            onTouchStart={handlers.onTouchStart}
-            onTouchEnd={handlers.onTouchEnd}
+            {...handlers}
             {...props}
+            onFocus={(e) => {
+              setIsFocused(true);
+              setTouched();
+              props.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              props.onBlur?.(e);
+            }}
+            onChange={(e) => {
+              setDirty();
+              props.onChange?.(e);
+            }}
           />
-
-          {/* Floating Label */}
-          {renderFloatingLabel()}
-
-          {/* Right Icons */}
-          <div className="absolute inset-y-0 right-0 flex items-center pr-4 space-x-2">
-            {clearable && hasValue && !loading && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="touch-target-sm text-muted-foreground hover:text-foreground transition-colors"
-                tabIndex={-1}
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-            
-            {loading && (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            )}
-            
-            {rightIcon && !loading && (
-              <span className={cn(
-                'text-muted-foreground transition-colors pointer-events-none',
-                iconSizes[size],
-                isFocused && 'text-primary'
-              )}>
-                {rightIcon}
-              </span>
-            )}
-          </div>
-
-          {/* Focus Ring Enhancement */}
-          {isFocused && (
-            <div className="absolute inset-0 rounded-lg ring-2 ring-primary/20 ring-offset-2 pointer-events-none" />
+          
+          {rightIcon && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+              {rightIcon}
+            </div>
+          )}
+          
+          {loading && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            </div>
           )}
         </div>
-
-        {renderFeedback()}
+        
+        {(error || hint) && (
+          <div className="text-sm">
+            {error ? (
+              <p className="text-destructive">{error}</p>
+            ) : hint ? (
+              <p className="text-muted-foreground">{hint}</p>
+            ) : null}
+          </div>
+        )}
       </div>
     );
   }
@@ -250,125 +138,124 @@ const TouchInput = forwardRef<HTMLInputElement, TouchInputProps>(
 
 TouchInput.displayName = 'TouchInput';
 
-interface TouchTextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'size'> {
+interface TouchTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
-  helperText?: string;
+  hint?: string;
   size?: 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'filled' | 'outlined';
   loading?: boolean;
-  success?: boolean;
-  showFeedback?: boolean;
   hapticFeedback?: boolean;
-  resizable?: boolean;
+  autoResize?: boolean;
 }
 
 const TouchTextarea = forwardRef<HTMLTextAreaElement, TouchTextareaProps>(
   ({ 
-    className, 
-    label, 
-    error, 
-    helperText, 
-    id, 
+    className,
+    label,
+    error,
+    hint,
     size = 'md',
+    variant = 'default',
     loading = false,
-    success = false,
-    showFeedback = true,
-    hapticFeedback = false,
-    resizable = true,
     disabled,
-    onFocus,
-    onBlur,
+    hapticFeedback = false,
+    autoResize = false,
+    id,
+    rows = 4,
     ...props 
   }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const inputId = id || `textarea-${Math.random().toString(36).substr(2, 9)}`;
 
-    const { triggerSelectionHaptic } = useHapticFeedback();
+    const { state, handlers } = useInteractionFeedback({
+      disabled: disabled || loading,
+      loading,
+      hapticFeedback,
+    });
 
     const sizes = {
-      sm: 'min-h-[80px] p-3 text-sm',
-      md: 'min-h-[100px] p-4 text-base',
-      lg: 'min-h-[120px] p-5 text-lg',
+      sm: 'p-3 text-sm min-h-[88px]', // 2 lines minimum
+      md: 'p-4 text-base min-h-[96px]', // 2 lines minimum
+      lg: 'p-5 text-lg min-h-[112px]', // 2 lines minimum
     };
 
-    const baseClasses = 'form-input-touch block w-full rounded-lg border bg-input text-foreground placeholder-muted-foreground shadow-sm transition-all focus:outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-50';
-
-    const getTextareaClasses = () => {
-      let classes = baseClasses;
-      
-      if (error) {
-        classes += ' border-error-500 focus:border-error-500 focus:ring-error-500 feedback-error';
-      } else if (success) {
-        classes += ' border-success-500 focus:border-success-500 focus:ring-success-500 feedback-success';
-      } else if (isFocused) {
-        classes += ' border-primary focus:border-primary focus:ring-primary';
-      } else {
-        classes += ' border-border hover:border-border-strong';
-      }
-
-      if (!resizable) {
-        classes += ' resize-none';
-      }
-
-      return classes;
+    const variants = {
+      default: 'border border-border bg-background',
+      filled: 'border-0 bg-muted',
+      outlined: 'border-2 border-border bg-transparent',
     };
 
-    const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-      setIsFocused(true);
-      if (hapticFeedback) {
-        triggerSelectionHaptic();
-      }
-      onFocus?.(e);
-    };
+    const focusStyles = isFocused ? 'ring-2 ring-ring ring-offset-2' : '';
+    const errorStyles = error ? 'border-destructive ring-destructive' : '';
 
-    const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-      setIsFocused(false);
-      onBlur?.(e);
+    const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      if (autoResize && textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      }
+      props.onChange?.(e);
     };
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-2">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-2">
+          <label 
+            htmlFor={inputId}
+            className="block text-sm font-medium text-foreground"
+          >
             {label}
           </label>
         )}
         
-        <div className="relative touch-target">
+        <div className="relative">
           <textarea
             id={inputId}
-            ref={ref}
+            rows={rows}
             className={cn(
-              getTextareaClasses(),
+              'w-full rounded-lg transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed resize-none touch-target',
               sizes[size],
+              variants[variant],
+              focusStyles,
+              errorStyles,
+              loading && 'cursor-wait',
               className
             )}
+            ref={(node) => {
+              if (typeof ref === 'function') ref(node);
+              else if (ref) ref.current = node;
+              (textareaRef as any).current = node;
+            }}
             disabled={disabled || loading}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
+            {...handlers}
             {...props}
+            onFocus={(e) => {
+              setIsFocused(true);
+              props.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              props.onBlur?.(e);
+            }}
+            onChange={handleInput}
           />
-
-          {/* Loading Indicator */}
+          
           {loading && (
-            <div className="absolute top-3 right-3">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <div className="absolute right-3 top-3">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             </div>
           )}
-
-          {/* Focus Ring Enhancement */}
-          {isFocused && (
-            <div className="absolute inset-0 rounded-lg ring-2 ring-primary/20 ring-offset-2 pointer-events-none" />
-          )}
         </div>
-
-        {/* Feedback */}
-        {showFeedback && (
-          <>
-            {error && <p className="text-sm text-error-600 mt-2">{error}</p>}
-            {success && !error && <p className="text-sm text-success-600 mt-2">✓ Looks good!</p>}
-            {helperText && !error && !success && <p className="text-sm text-muted-foreground mt-2">{helperText}</p>}
-          </>
+        
+        {(error || hint) && (
+          <div className="text-sm">
+            {error ? (
+              <p className="text-destructive">{error}</p>
+            ) : hint ? (
+              <p className="text-muted-foreground">{hint}</p>
+            ) : null}
+          </div>
         )}
       </div>
     );
@@ -380,140 +267,124 @@ TouchTextarea.displayName = 'TouchTextarea';
 interface TouchSelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   label?: string;
   error?: string;
-  helperText?: string;
+  hint?: string;
   size?: 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'filled' | 'outlined';
   loading?: boolean;
-  success?: boolean;
-  showFeedback?: boolean;
   hapticFeedback?: boolean;
-  placeholder?: string;
+  options: Array<{ value: string; label: string; disabled?: boolean }>;
 }
 
 const TouchSelect = forwardRef<HTMLSelectElement, TouchSelectProps>(
   ({ 
-    className, 
-    label, 
-    error, 
-    helperText, 
-    id, 
+    className,
+    label,
+    error,
+    hint,
     size = 'md',
+    variant = 'default',
     loading = false,
-    success = false,
-    showFeedback = true,
-    hapticFeedback = false,
-    placeholder,
     disabled,
-    onFocus,
-    onBlur,
-    onChange,
-    children,
+    hapticFeedback = false,
+    options,
+    id,
     ...props 
   }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
     const inputId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
 
-    const { triggerSelectionHaptic } = useHapticFeedback();
+    const { state, handlers } = useInteractionFeedback({
+      disabled: disabled || loading,
+      loading,
+      hapticFeedback,
+    });
 
+    // Touch-optimized sizes with minimum 44px height
     const sizes = {
-      sm: 'h-10 px-3 text-sm min-h-[44px]',
-      md: 'h-12 px-4 text-base min-h-[48px]',
-      lg: 'h-14 px-5 text-lg min-h-[56px]',
+      sm: 'h-11 px-3 text-sm', // 44px minimum
+      md: 'h-12 px-4 text-base', // 48px comfortable
+      lg: 'h-14 px-5 text-lg', // 56px large
     };
 
-    const baseClasses = 'select-touch block w-full rounded-lg border bg-input text-foreground shadow-sm transition-all focus:outline-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-50 appearance-none';
-
-    const getSelectClasses = () => {
-      let classes = baseClasses;
-      
-      if (error) {
-        classes += ' border-error-500 focus:border-error-500 focus:ring-error-500 feedback-error';
-      } else if (success) {
-        classes += ' border-success-500 focus:border-success-500 focus:ring-success-500 feedback-success';
-      } else if (isFocused) {
-        classes += ' border-primary focus:border-primary focus:ring-primary';
-      } else {
-        classes += ' border-border hover:border-border-strong';
-      }
-
-      return classes;
+    const variants = {
+      default: 'border border-border bg-background',
+      filled: 'border-0 bg-muted',
+      outlined: 'border-2 border-border bg-transparent',
     };
 
-    const handleFocus = (e: React.FocusEvent<HTMLSelectElement>) => {
-      setIsFocused(true);
-      if (hapticFeedback) {
-        triggerSelectionHaptic();
-      }
-      onFocus?.(e);
-    };
-
-    const handleBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
-      setIsFocused(false);
-      onBlur?.(e);
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      if (hapticFeedback) {
-        triggerSelectionHaptic();
-      }
-      onChange?.(e);
-    };
+    const focusStyles = isFocused ? 'ring-2 ring-ring ring-offset-2' : '';
+    const errorStyles = error ? 'border-destructive ring-destructive' : '';
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-2">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-foreground mb-2">
+          <label 
+            htmlFor={inputId}
+            className="block text-sm font-medium text-foreground"
+          >
             {label}
           </label>
         )}
         
-        <div className="relative touch-target">
+        <div className="relative">
           <select
             id={inputId}
-            ref={ref}
             className={cn(
-              getSelectClasses(),
+              'w-full rounded-lg transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed appearance-none touch-target',
               sizes[size],
+              variants[variant],
+              focusStyles,
+              errorStyles,
+              loading && 'cursor-wait',
               'pr-10', // Space for dropdown arrow
               className
             )}
+            ref={ref}
             disabled={disabled || loading}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onChange={handleChange}
+            {...handlers}
             {...props}
+            onFocus={(e) => {
+              setIsFocused(true);
+              props.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              props.onBlur?.(e);
+            }}
           >
-            {placeholder && (
-              <option value="" disabled>
-                {placeholder}
+            {options.map((option) => (
+              <option 
+                key={option.value} 
+                value={option.value}
+                disabled={option.disabled}
+              >
+                {option.label}
               </option>
-            )}
-            {children}
+            ))}
           </select>
-
+          
           {/* Dropdown Arrow */}
-          <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-            {loading ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            ) : (
-              <svg className="h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            )}
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
-
-          {/* Focus Ring Enhancement */}
-          {isFocused && (
-            <div className="absolute inset-0 rounded-lg ring-2 ring-primary/20 ring-offset-2 pointer-events-none" />
+          
+          {loading && (
+            <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            </div>
           )}
         </div>
-
-        {/* Feedback */}
-        {showFeedback && (
-          <>
-            {error && <p className="text-sm text-error-600 mt-2">{error}</p>}
-            {success && !error && <p className="text-sm text-success-600 mt-2">✓ Looks good!</p>}
-            {helperText && !error && !success && <p className="text-sm text-muted-foreground mt-2">{helperText}</p>}
-          </>
+        
+        {(error || hint) && (
+          <div className="text-sm">
+            {error ? (
+              <p className="text-destructive">{error}</p>
+            ) : hint ? (
+              <p className="text-muted-foreground">{hint}</p>
+            ) : null}
+          </div>
         )}
       </div>
     );

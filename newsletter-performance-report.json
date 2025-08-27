@@ -1,0 +1,77 @@
+{
+  "timestamp": "2025-08-25T20:58:21.795Z",
+  "analysis": {
+    "components": {
+      "totalSize": 57591,
+      "components": [
+        {
+          "path": "src/components/NewsletterModal.tsx",
+          "size": 10735,
+          "sizeKB": 10.48,
+          "sizeMB": 0.01
+        },
+        {
+          "path": "src/components/NewsletterModalLazy.tsx",
+          "size": 1321,
+          "sizeKB": 1.29,
+          "sizeMB": 0
+        },
+        {
+          "path": "src/components/NewsletterForm.tsx",
+          "size": 9206,
+          "sizeKB": 8.99,
+          "sizeMB": 0.01
+        },
+        {
+          "path": "src/hooks/useNewsletterModal.ts",
+          "size": 947,
+          "sizeKB": 0.92,
+          "sizeMB": 0
+        },
+        {
+          "path": "src/hooks/useNewsletterSubscription.ts",
+          "size": 13954,
+          "sizeKB": 13.63,
+          "sizeMB": 0.01
+        },
+        {
+          "path": "src/hooks/useNewsletterPerformance.ts",
+          "size": 6116,
+          "sizeKB": 5.97,
+          "sizeMB": 0.01
+        },
+        {
+          "path": "src/lib/newsletter-cache.ts",
+          "size": 5546,
+          "sizeKB": 5.42,
+          "sizeMB": 0.01
+        },
+        {
+          "path": "src/lib/newsletter-analytics.ts",
+          "size": 9766,
+          "sizeKB": 9.54,
+          "sizeMB": 0.01
+        }
+      ]
+    },
+    "bundle": {
+      "totalChunks": 1,
+      "largestChunks": [
+        {
+          "name": "polyfills.js",
+          "size": 112594,
+          "sizeKB": 109.96,
+          "sizeMB": 0.11
+        }
+      ],
+      "newsletterChunks": []
+    }
+  },
+  "optimizations": {
+    "lazyLoading": true,
+    "bundleSplitting": true,
+    "caching": true,
+    "performanceMonitoring": true,
+    "databaseOptimization": true
+  }
+}

@@ -1,0 +1,31 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /success
+
+# GPTBot
+User-agent: GPTBot
+Allow: /
+
+# ChatGPT-User
+User-agent: ChatGPT-User
+Allow: /
+
+# CCBot
+User-agent: CCBot
+Allow: /
+
+# anthropic-ai
+User-agent: anthropic-ai
+Allow: /
+
+# Claude-Web
+User-agent: Claude-Web
+Allow: /
+
+# Host
+Host: https://arenafund.vc
+
+# Sitemaps
+Sitemap: https://arenafund.vc/sitemap.xml

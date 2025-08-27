@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Debug</title>
+</head>
+<body>
+    <h1>Upload Debug Test</h1>
+    <button onclick="testUpload()">Test Upload API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testUpload() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                console.log('Making request to /api/upload/signed-url');
+                
+                const response = await fetch('/api/upload/signed-url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileName: 'test.pdf',
+                        fileType: 'application/pdf',
+                        fileSize: 1000
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<pre>SUCCESS:\n${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<pre>ERROR (${response.status}):\n${JSON.stringify(data, null, 2)}</pre>`;
+                }
+                
+            } catch (error) {
+                console.error('Fetch error:', error);
+                resultDiv.innerHTML = `<pre>FETCH ERROR:\n${error.message}\n\nStack:\n${error.stack}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

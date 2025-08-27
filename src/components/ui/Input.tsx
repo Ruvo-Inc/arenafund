@@ -60,9 +60,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     };
 
     const sizes = {
-      sm: 'h-8 px-3 text-sm rounded-md',
-      md: 'h-10 px-4 text-sm rounded-lg',
-      lg: 'h-12 px-6 text-base rounded-lg'
+      sm: 'h-10 px-3 text-base rounded-md min-h-[44px]', // Increased for mobile touch targets
+      md: 'h-12 px-4 text-base rounded-lg min-h-[48px]', // Increased for mobile touch targets
+      lg: 'h-14 px-6 text-base rounded-lg min-h-[56px]'  // Increased for mobile touch targets
     };
 
     const iconSizes = {
@@ -102,6 +102,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               sizes[inputSize],
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
+              // Mobile optimizations
+              'touch-manipulation', // Improves touch responsiveness
+              'text-base', // Prevents zoom on iOS
               className
             )}
             ref={ref}

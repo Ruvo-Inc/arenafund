@@ -35,7 +35,7 @@ type WindowWithCaptcha = Window & { grecaptcha?: Grecaptcha };
 function getRecaptcha(): Promise<Grecaptcha> {
   return new Promise((resolve, reject) => {
     if (typeof window === "undefined") return reject(new Error("window undefined"));
-    const w = window as WindowWithCaptcha;
+    const w = window as unknown as WindowWithCaptcha;
     if (w.grecaptcha) return resolve(w.grecaptcha);
     reject(new Error("grecaptcha not loaded"));
   });

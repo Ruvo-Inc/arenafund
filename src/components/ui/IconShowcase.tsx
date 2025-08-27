@@ -230,20 +230,20 @@ const categories = Array.from(new Set(iconDemos.map(icon => icon.category)));
 export const IconShowcase: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedSize, setSelectedSize] = useState<number>(24);
-  const [selectedColor, setSelectedColor] = useState<string>(colors.semantic.textPrimary);
+  const [selectedColor, setSelectedColor] = useState<string>(colors.gray[600]);
 
   const filteredIcons = selectedCategory === 'All' 
     ? iconDemos 
     : iconDemos.filter(icon => icon.category === selectedCategory);
 
   const colorOptions = [
-    { name: 'Primary', value: colors.semantic.textPrimary },
-    { name: 'Secondary', value: colors.semantic.textSecondary },
-    { name: 'Success', value: colors.semantic.success },
-    { name: 'Warning', value: colors.semantic.warning },
-    { name: 'Error', value: colors.semantic.error },
-    { name: 'Info', value: colors.semantic.info },
-    { name: 'Navy', value: colors.navy.deep },
+    { name: 'Primary', value: colors.gray[600] },
+    { name: 'Secondary', value: colors.gray[400] },
+    { name: 'Success', value: colors.success[500] },
+    { name: 'Warning', value: colors.warning[500] },
+    { name: 'Error', value: colors.error[500] },
+    { name: 'Info', value: colors.blue[500] },
+          { name: 'Navy', value: colors.navy[600] },
   ];
 
   const sizeOptions = [16, 20, 24, 32, 48, 64];

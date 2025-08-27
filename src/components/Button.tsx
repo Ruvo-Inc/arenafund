@@ -1,8 +1,7 @@
 'use client';
 
-import { ButtonHTMLAttributes, forwardRef, ReactNode } from 'react';
+import { ButtonHTMLAttributes, forwardRef, ReactNode, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { useInteractionFeedback, useRippleEffect } from '@/hooks/useInteractionFeedback';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'cta';
@@ -11,9 +10,14 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   fullWidth?: boolean;
-  hoverEffect?: 'lift' | 'scale' | 'glow' | 'none';
   ripple?: boolean;
-  hapticFeedback?: boolean;
+  hoverEffect?: 'lift' | 'scale' | 'glow' | 'none';
+}
+
+interface Ripple {
+  id: number;
+  x: number;
+  y: number;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -26,20 +30,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     leftIcon,
     rightIcon,
     fullWidth,
-    hoverEffect = 'lift',
     ripple = false,
-    hapticFeedback = false,
+    hoverEffect = 'none',
     children,
     onClick,
     ...props 
   }, ref) => {
-    const { state, handlers } = useInteractionFeedback({
-      disabled: disabled || loading,
-      loading,
-      hapticFeedback,
-    });
-
-    const { ripples, createRipple } = useRippleEffect();
+    const [ripples, setRipples] = useState<Ripple[]>([]);
+    const [isPressed, setIsPressed] = useState(false);
 
     const baseClasses = 'touch-target relative inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg overflow-hidden';
     
@@ -71,11 +69,44 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const widthClass = fullWidth ? 'w-full' : '';
     const loadingClass = loading ? 'btn-loading' : '';
 
+    const createRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+      const button = event.currentTarget;
+      const rect = button.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = event.clientX - rect.left - size / 2;
+      const y = event.clientY - rect.top - size / 2;
+      
+      const newRipple: Ripple = {
+        id: Date.now(),
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
+
+      setRipples(prev => [...prev, newRipple]);
+
+      // Remove ripple after animation
+      setTimeout(() => {
+        setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+      }, 600);
+    }, []);
+
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
       if (ripple) {
         createRipple(event);
       }
       onClick?.(event);
+    };
+
+    const handleMouseDown = () => {
+      setIsPressed(true);
+    };
+
+    const handleMouseUp = () => {
+      setIsPressed(false);
+    };
+
+    const handleMouseLeave = () => {
+      setIsPressed(false);
     };
 
     return (
@@ -87,13 +118,15 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           hoverEffects[hoverEffect],
           widthClass,
           loadingClass,
-          state.isPressed && 'transform scale-95',
+          isPressed && 'transform scale-95',
           className
         )}
         ref={ref}
         disabled={disabled || loading}
         onClick={handleClick}
-        {...handlers}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
         {...props}
       >
         {/* Ripple Effect */}

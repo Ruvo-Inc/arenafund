@@ -62,6 +62,7 @@ function initializeFirebaseAdmin(): void {
           clientEmail: serviceAccount.client_email,
         }),
         projectId: serviceAccount.project_id,
+        storageBucket: `${serviceAccount.project_id}.appspot.com`,
       })
       
       console.log('✅ Firebase Admin SDK initialized with service account key')
@@ -84,6 +85,7 @@ function initializeFirebaseAdmin(): void {
           clientEmail: serviceAccount.client_email,
         }),
         projectId: serviceAccount.project_id,
+        storageBucket: `${serviceAccount.project_id}.appspot.com`,
       })
       
       console.log('✅ Firebase Admin SDK initialized with GOOGLE_APPLICATION_CREDENTIALS')
@@ -96,6 +98,7 @@ function initializeFirebaseAdmin(): void {
     initializeApp({
       credential: applicationDefault(),
       projectId: 'arenafund',
+      storageBucket: 'arenafund.appspot.com',
     })
     
     console.log('✅ Firebase Admin SDK initialized with Application Default Credentials')
@@ -157,8 +160,8 @@ export function getAdminDb() {
 }
 
 // Legacy exports for backward compatibility - use functions instead to avoid eager initialization
-// export const adminAuth = getAdminAuth()
-// export const adminDb = getAdminDb()
+export const adminAuth = getAdminAuth()
+export const adminDb = getAdminDb()
 
 // Export initialization function for explicit calls
 export { initializeFirebaseAdmin }
@@ -172,4 +175,5 @@ export const COLLECTIONS = {
   RAISES: 'raises',
   SETTINGS: 'settings',
   MAIL_QUEUE: 'mailQueue',
+  NEWSLETTER_SUBSCRIBERS: 'newsletter_subscribers',
 } as const

@@ -1,268 +1,215 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useReducedMotion } from './useReducedMotion';
 
 export interface ParallaxConfig {
   speed?: number;
   direction?: 'up' | 'down' | 'left' | 'right';
-  disabled?: boolean;
-  rootMargin?: string;
+  easing?: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
+  offset?: number;
   enableOnMobile?: boolean;
 }
 
 export interface ParallaxState {
+  offset: number;
+  progress: number;
+  isInView: boolean;
+  ref: React.RefObject<HTMLElement | null>;
   transform: string;
-  isActive: boolean;
+  shouldAnimate: boolean;
 }
 
-/**
- * Professional parallax system with advanced performance optimizations
- * Includes mobile detection, reduced motion support, and frame-rate optimization
- */
-export function useParallax(config: ParallaxConfig = {}) {
+export function useParallax(config: ParallaxConfig = {}): ParallaxState {
   const {
     speed = 0.5,
     direction = 'up',
-    disabled = false,
-    rootMargin = '200px',
-    enableOnMobile = false
+    easing = 'linear',
+    offset = 0,
+    enableOnMobile = true,
   } = config;
 
-  const elementRef = useRef<HTMLElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const ref = useRef<HTMLElement>(null);
   const [state, setState] = useState<ParallaxState>({
+    offset: 0,
+    progress: 0,
+    isInView: false,
+    ref,
     transform: 'translate3d(0, 0, 0)',
-    isActive: false
+    shouldAnimate: !prefersReducedMotion && enableOnMobile,
   });
 
-  const prefersReducedMotion = useReducedMotion();
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Check if device is mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const shouldAnimate = !disabled && 
-                       !prefersReducedMotion && 
-                       (enableOnMobile || !isMobile);
-
-  useEffect(() => {
-    const element = elementRef.current;
-    if (!element || !shouldAnimate) {
-      setState({
+  const handleScroll = useCallback(() => {
+    if (prefersReducedMotion || !enableOnMobile) {
+      setState(prev => ({ 
+        ...prev, 
+        offset: 0, 
+        progress: 0, 
+        isInView: true,
         transform: 'translate3d(0, 0, 0)',
-        isActive: false
-      });
+        shouldAnimate: false,
+      }));
       return;
     }
 
-    let isElementVisible = false;
-    let animationFrameId: number;
+    const scrollY = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    
+    // Calculate progress (0 to 1)
+    const progress = Math.max(0, Math.min(1, scrollY / (documentHeight - windowHeight)));
+    
+    // Calculate offset based on direction and speed
+    let calculatedOffset = 0;
+    switch (direction) {
+      case 'up':
+        calculatedOffset = -scrollY * speed;
+        break;
+      case 'down':
+        calculatedOffset = scrollY * speed;
+        break;
+      case 'left':
+        calculatedOffset = -scrollY * speed;
+        break;
+      case 'right':
+        calculatedOffset = scrollY * speed;
+        break;
+    }
 
-    // Intersection Observer to track when element is in viewport
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          isElementVisible = entry.isIntersecting;
-          setState(prev => ({ ...prev, isActive: isElementVisible }));
-        });
-      },
-      {
-        rootMargin
-      }
-    );
+    // Apply easing
+    let easedOffset = calculatedOffset;
+    switch (easing) {
+      case 'ease-in':
+        easedOffset = calculatedOffset * progress;
+        break;
+      case 'ease-out':
+        easedOffset = calculatedOffset * (1 - Math.pow(1 - progress, 3));
+        break;
+      case 'ease-in-out':
+        easedOffset = calculatedOffset * (progress < 0.5 
+          ? 2 * progress * progress 
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2);
+        break;
+      default:
+        easedOffset = calculatedOffset;
+    }
 
-    observer.observe(element);
+    const finalOffset = easedOffset + offset;
+    const transform = `translate3d(0, ${finalOffset}px, 0)`;
 
-    // Scroll handler with requestAnimationFrame for performance
-    const handleScroll = () => {
-      if (!isElementVisible) return;
-
-      const rect = element.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      // Calculate scroll progress relative to viewport
-      const elementCenter = rect.top + rect.height / 2;
-      const viewportCenter = windowHeight / 2;
-      const scrollProgress = (viewportCenter - elementCenter) / windowHeight;
-      
-      // Apply speed multiplier
-      const offset = scrollProgress * speed * 100;
-      
-      let transform = '';
-      switch (direction) {
-        case 'up':
-          transform = `translate3d(0, ${-offset}px, 0)`;
-          break;
-        case 'down':
-          transform = `translate3d(0, ${offset}px, 0)`;
-          break;
-        case 'left':
-          transform = `translate3d(${-offset}px, 0, 0)`;
-          break;
-        case 'right':
-          transform = `translate3d(${offset}px, 0, 0)`;
-          break;
-      }
-
-      setState(prev => ({
-        ...prev,
-        transform
-      }));
-    };
-
-    // Throttled scroll listener
-    let ticking = false;
-    const throttledScroll = () => {
-      if (!ticking) {
-        animationFrameId = requestAnimationFrame(() => {
-          handleScroll();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    // Initial calculation
-    handleScroll();
-
-    window.addEventListener('scroll', throttledScroll, { passive: true });
-    window.addEventListener('resize', handleScroll, { passive: true });
-
-    return () => {
-      observer.unobserve(element);
-      window.removeEventListener('scroll', throttledScroll);
-      window.removeEventListener('resize', handleScroll);
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [speed, direction, shouldAnimate, rootMargin]);
-
-  return {
-    ref: elementRef,
-    ...state,
-    shouldAnimate
-  };
-}
-
-/**
- * Advanced multi-layer parallax system for complex visual compositions
- * Orchestrates multiple parallax layers with precision timing and performance monitoring
- */
-export function useMultiLayerParallax(layers: ParallaxConfig[] = []) {
-  const prefersReducedMotion = useReducedMotion();
-  const containerRef = useRef<HTMLElement>(null);
-  const [layerStates, setLayerStates] = useState<ParallaxState[]>(
-    layers.map(() => ({
-      transform: 'translate3d(0, 0, 0)',
-      isActive: false
-    }))
-  );
-
-  const shouldAnimate = !prefersReducedMotion;
+    setState(prev => ({
+      ...prev,
+      offset: finalOffset,
+      progress,
+      isInView: true,
+      transform,
+      shouldAnimate: true,
+    }));
+  }, [speed, direction, easing, offset, prefersReducedMotion, enableOnMobile]);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !shouldAnimate || layers.length === 0) {
-      setLayerStates(layers.map(() => ({
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial call
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  return state;
+}
+
+export interface MultiLayerParallaxConfig {
+  layers: Array<{
+    speed?: number;
+    direction?: 'up' | 'down' | 'left' | 'right';
+    easing?: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
+    offset?: number;
+  }>;
+}
+
+export function useMultiLayerParallax(config: MultiLayerParallaxConfig) {
+  const prefersReducedMotion = useReducedMotion();
+  const containerRef = useRef<HTMLElement>(null);
+  const [layerStates, setLayerStates] = useState<ParallaxState[]>([]);
+
+  const handleScroll = useCallback(() => {
+    if (prefersReducedMotion) {
+      setLayerStates(config.layers.map(() => ({ 
+        offset: 0, 
+        progress: 0, 
+        isInView: true,
+        ref: containerRef,
         transform: 'translate3d(0, 0, 0)',
-        isActive: false
+        shouldAnimate: false,
       })));
       return;
     }
 
-    let isContainerVisible = false;
-    let animationFrameId: number;
+    const scrollY = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    const progress = Math.max(0, Math.min(1, scrollY / (documentHeight - windowHeight)));
 
-    // Intersection Observer for container
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          isContainerVisible = entry.isIntersecting;
-        });
-      },
-      {
-        rootMargin: '200px'
+    const newLayerStates = config.layers.map(layer => {
+      let calculatedOffset = 0;
+      const speed = layer.speed || 0.5;
+      switch (layer.direction || 'up') {
+        case 'up':
+          calculatedOffset = -scrollY * speed;
+          break;
+        case 'down':
+          calculatedOffset = scrollY * speed;
+          break;
+        case 'left':
+          calculatedOffset = -scrollY * speed;
+          break;
+        case 'right':
+          calculatedOffset = scrollY * speed;
+          break;
       }
-    );
 
-    observer.observe(container);
-
-    const handleScroll = () => {
-      if (!isContainerVisible) return;
-
-      const rect = container.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const elementCenter = rect.top + rect.height / 2;
-      const viewportCenter = windowHeight / 2;
-      const scrollProgress = (viewportCenter - elementCenter) / windowHeight;
-
-      const newStates = layers.map((layer, index) => {
-        const speed = layer.speed || 0.5;
-        const direction = layer.direction || 'up';
-        const offset = scrollProgress * speed * 100;
-
-        let transform = '';
-        switch (direction) {
-          case 'up':
-            transform = `translate3d(0, ${-offset}px, 0)`;
-            break;
-          case 'down':
-            transform = `translate3d(0, ${offset}px, 0)`;
-            break;
-          case 'left':
-            transform = `translate3d(${-offset}px, 0, 0)`;
-            break;
-          case 'right':
-            transform = `translate3d(${offset}px, 0, 0)`;
-            break;
-        }
-
-        return {
-          transform,
-          isActive: isContainerVisible
-        };
-      });
-
-      setLayerStates(newStates);
-    };
-
-    // Throttled scroll listener
-    let ticking = false;
-    const throttledScroll = () => {
-      if (!ticking) {
-        animationFrameId = requestAnimationFrame(() => {
-          handleScroll();
-          ticking = false;
-        });
-        ticking = true;
+      // Apply easing
+      let easedOffset = calculatedOffset;
+      switch (layer.easing || 'linear') {
+        case 'ease-in':
+          easedOffset = calculatedOffset * progress;
+          break;
+        case 'ease-out':
+          easedOffset = calculatedOffset * (1 - Math.pow(1 - progress, 3));
+          break;
+        case 'ease-in-out':
+          easedOffset = calculatedOffset * (progress < 0.5 
+            ? 2 * progress * progress 
+            : 1 - Math.pow(-2 * progress + 2, 3) / 2);
+          break;
+        default:
+          easedOffset = calculatedOffset;
       }
-    };
 
-    handleScroll();
+      const finalOffset = easedOffset + (layer.offset || 0);
+      const transform = `translate3d(0, ${finalOffset}px, 0)`;
 
-    window.addEventListener('scroll', throttledScroll, { passive: true });
-    window.addEventListener('resize', handleScroll, { passive: true });
+      return {
+        offset: finalOffset,
+        progress,
+        isInView: true,
+        ref: containerRef,
+        transform,
+        shouldAnimate: true,
+      };
+    });
 
-    return () => {
-      observer.unobserve(container);
-      window.removeEventListener('scroll', throttledScroll);
-      window.removeEventListener('resize', handleScroll);
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [layers, shouldAnimate]);
+    setLayerStates(newLayerStates);
+  }, [config.layers, prefersReducedMotion]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial call
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   return {
     containerRef,
     layerStates,
-    shouldAnimate
+    shouldAnimate: !prefersReducedMotion,
   };
 }

@@ -1,202 +1,370 @@
-/**
- * Performance utilities for enhanced components
- * Provides performance monitoring and optimization helpers
- */
+import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals';
 
-export interface PerformanceConfig {
-  mode: 'high' | 'balanced' | 'battery';
-  reducedMotion: boolean;
-  prefersReducedData: boolean;
+export interface WebVitalsMetric {
+  name: string;
+  value: number;
+  rating: 'good' | 'needs-improvement' | 'poor';
+  delta: number;
+  id: string;
+  navigationType: string;
+}
+
+export interface PerformanceReport {
+  url: string;
+  timestamp: number;
+  metrics: WebVitalsMetric[];
+  userAgent: string;
+  connectionType?: string;
+}
+
+// Web Vitals thresholds based on Google's recommendations
+const THRESHOLDS = {
+  LCP: { good: 2500, poor: 4000 },
+  INP: { good: 200, poor: 500 }, // INP replaced FID
+  CLS: { good: 0.1, poor: 0.25 },
+  FCP: { good: 1800, poor: 3000 },
+  TTFB: { good: 800, poor: 1800 },
+};
+
+/**
+ * Get performance rating based on metric value and thresholds
+ */
+function getPerformanceRating(name: string, value: number): 'good' | 'needs-improvement' | 'poor' {
+  const threshold = THRESHOLDS[name as keyof typeof THRESHOLDS];
+  if (!threshold) return 'good';
+  
+  if (value <= threshold.good) return 'good';
+  if (value <= threshold.poor) return 'needs-improvement';
+  return 'poor';
 }
 
 /**
- * Detects user's performance preferences
+ * Convert web-vitals Metric to our WebVitalsMetric format
  */
-export function detectPerformancePreferences(): PerformanceConfig {
-  if (typeof window === 'undefined') {
-    return {
-      mode: 'balanced',
-      reducedMotion: false,
-      prefersReducedData: false,
-    };
-  }
-
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const prefersReducedData = window.matchMedia('(prefers-reduced-data: reduce)').matches;
-  
-  // Detect device capabilities
-  const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
-  const isSlowConnection = connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g');
-  const isLowEndDevice = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
-  
-  let mode: 'high' | 'balanced' | 'battery' = 'balanced';
-  
-  if (isSlowConnection || isLowEndDevice || prefersReducedData) {
-    mode = 'battery';
-  } else if (!reducedMotion && 'requestIdleCallback' in window) {
-    mode = 'high';
-  }
-
+function formatMetric(metric: Metric): WebVitalsMetric {
   return {
-    mode,
-    reducedMotion,
-    prefersReducedData,
+    name: metric.name,
+    value: metric.value,
+    rating: getPerformanceRating(metric.name, metric.value),
+    delta: metric.delta,
+    id: metric.id,
+    navigationType: metric.navigationType || 'navigate',
   };
 }
 
 /**
- * Optimizes animation configuration based on performance mode
+ * Initialize Web Vitals monitoring
  */
-export function optimizeAnimationConfig(
-  config: any,
-  performanceMode: 'high' | 'balanced' | 'battery'
-) {
-  switch (performanceMode) {
-    case 'battery':
-      return {
-        ...config,
-        transition: {
-          ...config.transition,
-          duration: (config.transition?.duration || 0.3) * 1.5,
-          ease: 'easeOut',
-        },
-      };
-    case 'high':
-      return {
-        ...config,
-        transition: {
-          ...config.transition,
-          type: 'spring',
-          stiffness: 400,
-          damping: 30,
-        },
-      };
-    default:
-      return config;
-  }
-}
-
-/**
- * Debounces expensive operations for better performance
- */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-}
-
-/**
- * Throttles high-frequency events like mouse move
- */
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let inThrottle: boolean;
-  return (...args: Parameters<T>) => {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
-    }
-  };
-}
-
-/**
- * Checks if the current device supports advanced animations
- */
-export function supportsAdvancedAnimations(): boolean {
-  if (typeof window === 'undefined') return false;
-  
-  return (
-    'requestAnimationFrame' in window &&
-    'CSS' in window &&
-    CSS.supports('transform', 'translateZ(0)') &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-}
-
-/**
- * Performance monitoring for component render times
- */
-export class PerformanceMonitor {
-  private static instance: PerformanceMonitor;
-  private measurements: Map<string, number[]> = new Map();
-
-  static getInstance(): PerformanceMonitor {
-    if (!PerformanceMonitor.instance) {
-      PerformanceMonitor.instance = new PerformanceMonitor();
-    }
-    return PerformanceMonitor.instance;
-  }
-
-  startMeasurement(componentName: string): string {
-    const measurementId = `${componentName}-${Date.now()}`;
-    if (typeof performance !== 'undefined') {
-      performance.mark(`${measurementId}-start`);
-    }
-    return measurementId;
-  }
-
-  endMeasurement(measurementId: string, componentName: string): number {
-    if (typeof performance === 'undefined') return 0;
-
-    try {
-      performance.mark(`${measurementId}-end`);
-      performance.measure(measurementId, `${measurementId}-start`, `${measurementId}-end`);
-      
-      const measure = performance.getEntriesByName(measurementId)[0];
-      const duration = measure.duration;
-
-      // Store measurement
-      if (!this.measurements.has(componentName)) {
-        this.measurements.set(componentName, []);
-      }
-      const measurements = this.measurements.get(componentName)!;
-      measurements.push(duration);
-      
-      // Keep only last 100 measurements
-      if (measurements.length > 100) {
-        measurements.shift();
-      }
-
-      // Clean up performance entries
-      performance.clearMarks(`${measurementId}-start`);
-      performance.clearMarks(`${measurementId}-end`);
-      performance.clearMeasures(measurementId);
-
-      return duration;
-    } catch (error) {
-      console.warn('Performance measurement failed:', error);
-      return 0;
-    }
-  }
-
-  getAverageRenderTime(componentName: string): number {
-    const measurements = this.measurements.get(componentName);
-    if (!measurements || measurements.length === 0) return 0;
+export function initWebVitals(onMetric?: (metric: WebVitalsMetric) => void) {
+  const handleMetric = (metric: Metric) => {
+    const formattedMetric = formatMetric(metric);
     
-    const sum = measurements.reduce((acc, time) => acc + time, 0);
-    return sum / measurements.length;
-  }
-
-  getPerformanceReport(): Record<string, { average: number; count: number }> {
-    const report: Record<string, { average: number; count: number }> = {};
+    // Log to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Web Vitals] ${formattedMetric.name}:`, {
+        value: formattedMetric.value,
+        rating: formattedMetric.rating,
+        delta: formattedMetric.delta,
+      });
+    }
     
-    this.measurements.forEach((measurements, componentName) => {
-      report[componentName] = {
-        average: this.getAverageRenderTime(componentName),
-        count: measurements.length,
-      };
+    // Send to analytics or custom handler
+    if (onMetric) {
+      onMetric(formattedMetric);
+    }
+    
+    // Send to analytics endpoint
+    sendToAnalytics(formattedMetric);
+  };
+
+  // Collect all Core Web Vitals
+  onCLS(handleMetric);
+  onFCP(handleMetric);
+  onINP(handleMetric); // INP replaced FID in web-vitals v4+
+  onLCP(handleMetric);
+  onTTFB(handleMetric);
+}
+
+/**
+ * Send metrics to analytics endpoint
+ */
+async function sendToAnalytics(metric: WebVitalsMetric) {
+  try {
+    const report: PerformanceReport = {
+      url: window.location.href,
+      timestamp: Date.now(),
+      metrics: [metric],
+      userAgent: navigator.userAgent,
+      connectionType: (navigator as any).connection?.effectiveType,
+    };
+
+    // Send to our analytics endpoint
+    await fetch('/api/analytics/performance', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(report),
     });
-    
-    return report;
+  } catch (error) {
+    // Silently fail to avoid impacting user experience
+    console.warn('Failed to send performance metrics:', error);
   }
 }
 
-export const performanceMonitor = PerformanceMonitor.getInstance();
+/**
+ * Performance optimization utilities
+ */
+export class PerformanceOptimizer {
+  private static instance: PerformanceOptimizer;
+  private metrics: Map<string, WebVitalsMetric[]> = new Map();
+  private observers: Map<string, PerformanceObserver> = new Map();
+
+  static getInstance(): PerformanceOptimizer {
+    if (!PerformanceOptimizer.instance) {
+      PerformanceOptimizer.instance = new PerformanceOptimizer();
+    }
+    return PerformanceOptimizer.instance;
+  }
+
+  /**
+   * Start monitoring performance
+   */
+  startMonitoring() {
+    if (typeof window === 'undefined') return;
+
+    // Initialize Web Vitals
+    initWebVitals((metric) => {
+      this.addMetric(window.location.pathname, metric);
+    });
+
+    // Monitor resource loading
+    this.observeResourceTiming();
+    
+    // Monitor navigation timing
+    this.observeNavigationTiming();
+  }
+
+  /**
+   * Add a metric for a specific page
+   */
+  addMetric(page: string, metric: WebVitalsMetric) {
+    if (!this.metrics.has(page)) {
+      this.metrics.set(page, []);
+    }
+    this.metrics.get(page)!.push(metric);
+  }
+
+  /**
+   * Get metrics for a specific page
+   */
+  getMetrics(page: string): WebVitalsMetric[] {
+    return this.metrics.get(page) || [];
+  }
+
+  /**
+   * Get performance summary for all pages
+   */
+  getPerformanceSummary() {
+    const summary: Record<string, any> = {};
+    
+    for (const [page, metrics] of this.metrics.entries()) {
+      summary[page] = {
+        totalMetrics: metrics.length,
+        goodMetrics: metrics.filter(m => m.rating === 'good').length,
+        needsImprovementMetrics: metrics.filter(m => m.rating === 'needs-improvement').length,
+        poorMetrics: metrics.filter(m => m.rating === 'poor').length,
+        averageValues: this.calculateAverageValues(metrics),
+      };
+    }
+    
+    return summary;
+  }
+
+  /**
+   * Observe resource timing
+   */
+  private observeResourceTiming() {
+    if (!('PerformanceObserver' in window)) return;
+
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.entryType === 'resource') {
+          this.analyzeResourceTiming(entry as PerformanceResourceTiming);
+        }
+      }
+    });
+
+    observer.observe({ entryTypes: ['resource'] });
+    this.observers.set('resource', observer);
+  }
+
+  /**
+   * Observe navigation timing
+   */
+  private observeNavigationTiming() {
+    if (!('PerformanceObserver' in window)) return;
+
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.entryType === 'navigation') {
+          this.analyzeNavigationTiming(entry as PerformanceNavigationTiming);
+        }
+      }
+    });
+
+    observer.observe({ entryTypes: ['navigation'] });
+    this.observers.set('navigation', observer);
+  }
+
+  /**
+   * Analyze resource timing for optimization opportunities
+   */
+  private analyzeResourceTiming(entry: PerformanceResourceTiming) {
+    const duration = entry.responseEnd - entry.startTime;
+    
+    // Log slow resources in development
+    if (process.env.NODE_ENV === 'development' && duration > 1000) {
+      console.warn(`[Performance] Slow resource: ${entry.name} (${duration.toFixed(2)}ms)`);
+    }
+  }
+
+  /**
+   * Analyze navigation timing
+   */
+  private analyzeNavigationTiming(entry: PerformanceNavigationTiming) {
+    const metrics = {
+      domContentLoaded: entry.domContentLoadedEventEnd - entry.domContentLoadedEventStart,
+      loadComplete: entry.loadEventEnd - entry.loadEventStart,
+      firstByte: entry.responseStart - entry.requestStart,
+      domInteractive: entry.domInteractive - entry.fetchStart,
+    };
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Performance] Navigation timing:', metrics);
+    }
+  }
+
+  /**
+   * Calculate average values for metrics
+   */
+  private calculateAverageValues(metrics: WebVitalsMetric[]) {
+    const grouped = metrics.reduce((acc, metric) => {
+      if (!acc[metric.name]) acc[metric.name] = [];
+      acc[metric.name].push(metric.value);
+      return acc;
+    }, {} as Record<string, number[]>);
+
+    const averages: Record<string, number> = {};
+    for (const [name, values] of Object.entries(grouped)) {
+      averages[name] = values.reduce((sum, val) => sum + val, 0) / values.length;
+    }
+
+    return averages;
+  }
+
+  /**
+   * Clean up observers
+   */
+  cleanup() {
+    for (const observer of this.observers.values()) {
+      observer.disconnect();
+    }
+    this.observers.clear();
+  }
+}
+
+/**
+ * Preload critical resources
+ */
+export function preloadCriticalResources() {
+  if (typeof window === 'undefined') return;
+
+  // Preload critical fonts
+  const fontPreloads = [
+    '/fonts/inter-var.woff2',
+    '/fonts/inter-var-italic.woff2',
+  ];
+
+  fontPreloads.forEach(href => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'font';
+    link.type = 'font/woff2';
+    link.crossOrigin = 'anonymous';
+    link.href = href;
+    document.head.appendChild(link);
+  });
+}
+
+/**
+ * Optimize images with intersection observer for lazy loading
+ */
+export function optimizeImages() {
+  if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+
+  const imageObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target as HTMLImageElement;
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+          imageObserver.unobserve(img);
+        }
+      }
+    });
+  }, {
+    rootMargin: '50px 0px',
+    threshold: 0.01,
+  });
+
+  // Observe all images with data-src attribute
+  document.querySelectorAll('img[data-src]').forEach(img => {
+    imageObserver.observe(img);
+  });
+}
+
+/**
+ * Defer non-critical JavaScript
+ */
+export function deferNonCriticalJS() {
+  if (typeof window === 'undefined') return;
+
+  // Defer analytics and other non-critical scripts
+  const deferredScripts = [
+    'https://www.googletagmanager.com/gtag/js',
+    // Add other non-critical scripts here
+  ];
+
+  // Load deferred scripts after page load
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      deferredScripts.forEach(src => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        document.head.appendChild(script);
+      });
+    }, 1000);
+  });
+}
+
+/**
+ * Initialize all performance optimizations
+ */
+export function initPerformanceOptimizations() {
+  if (typeof window === 'undefined') return;
+
+  const optimizer = PerformanceOptimizer.getInstance();
+  optimizer.startMonitoring();
+  
+  preloadCriticalResources();
+  optimizeImages();
+  deferNonCriticalJS();
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    optimizer.cleanup();
+  });
+}

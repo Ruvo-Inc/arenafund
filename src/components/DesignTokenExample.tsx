@@ -21,7 +21,7 @@ export default function DesignTokenExample({ className = '' }: DesignTokenExampl
     backgroundColor: colors.navy[50],
     padding: spacing[6],
     borderRadius: '8px',
-    transition: animation.transition.base,
+    transition: `all ${animation.duration.normal} ${animation.easing.inOut}`,
   };
 
   return (
@@ -63,8 +63,8 @@ export default function DesignTokenExample({ className = '' }: DesignTokenExampl
           <h3 className="font-display text-xl font-semibold text-foreground">
             Status Colors with Semantic Variants
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {(['success', 'warning', 'error', 'info'] as const).map((status) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(['success', 'warning', 'error'] as const).map((status) => (
               <div key={status} className="space-y-2">
                 <h4 className="font-display text-sm font-semibold text-foreground capitalize">
                   {status}
@@ -79,9 +79,9 @@ export default function DesignTokenExample({ className = '' }: DesignTokenExampl
                   <div 
                     className="p-2 rounded border text-sm"
                     style={{ 
-                      backgroundColor: getStatusColor(status, 'background'),
-                      borderColor: getStatusColor(status, 'border'),
-                      color: getStatusColor(status)
+                      backgroundColor: getStatusColor(status, 50),
+                      borderColor: getStatusColor(status, 200),
+                      color: getStatusColor(status, 700)
                     }}
                   >
                     Subtle Background
@@ -98,7 +98,7 @@ export default function DesignTokenExample({ className = '' }: DesignTokenExampl
             Button Variants with Interactive States
           </h3>
           <div className="space-y-4">
-            {(['primary', 'secondary', 'ghost', 'destructive'] as const).map((variant) => (
+            {(['primary', 'secondary', 'outline', 'ghost'] as const).map((variant) => (
               <div key={variant} className="flex flex-wrap items-center gap-4">
                 <span className="font-display text-sm font-medium text-foreground w-20 capitalize">
                   {variant}
@@ -106,15 +106,15 @@ export default function DesignTokenExample({ className = '' }: DesignTokenExampl
                 <button 
                   className="px-4 py-2 rounded-lg font-medium transition-colors duration-200"
                   style={{
-                    backgroundColor: getButtonColor(variant, 'default', 'background'),
-                    color: getButtonColor(variant, 'default', 'text'),
-                    border: `1px solid ${getButtonColor(variant, 'default', 'border')}`,
+                    backgroundColor: getButtonColor(variant, 'default'),
+                    color: variant === 'outline' || variant === 'ghost' ? colors.navy[700] : colors.white,
+                    border: `1px solid ${getButtonColor(variant, 'default')}`,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = getButtonColor(variant, 'hover', 'background');
+                    e.currentTarget.style.backgroundColor = getButtonColor(variant, 'hover');
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = getButtonColor(variant, 'default', 'background');
+                    e.currentTarget.style.backgroundColor = getButtonColor(variant, 'default');
                   }}
                 >
                   Default
@@ -122,9 +122,9 @@ export default function DesignTokenExample({ className = '' }: DesignTokenExampl
                 <button 
                   className="px-4 py-2 rounded-lg font-medium opacity-50 cursor-not-allowed"
                   style={{
-                    backgroundColor: getButtonColor(variant, 'disabled', 'background'),
-                    color: getButtonColor(variant, 'disabled', 'text'),
-                    border: `1px solid ${getButtonColor(variant, 'disabled', 'border')}`,
+                    backgroundColor: colors.gray[200],
+                    color: colors.gray[500],
+                    border: `1px solid ${colors.gray[300]}`,
                   }}
                   disabled
                 >
@@ -169,23 +169,23 @@ export default function DesignTokenExample({ className = '' }: DesignTokenExampl
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { key: 'surface', label: 'Base Surface', desc: 'Default background' },
-              { key: 'surfaceElevated', label: 'Elevated Surface', desc: 'Cards and modals' },
-              { key: 'surfaceMuted', label: 'Muted Surface', desc: 'Subtle backgrounds' },
-              { key: 'surfaceSubtle', label: 'Subtle Surface', desc: 'Very light backgrounds' }
-            ].map(({ key, label, desc }) => (
+              { key: 'surface', label: 'Base Surface', desc: 'Default background', bg: colors.white },
+              { key: 'surfaceElevated', label: 'Elevated Surface', desc: 'Cards and modals', bg: colors.gray[50] },
+              { key: 'surfaceMuted', label: 'Muted Surface', desc: 'Subtle backgrounds', bg: colors.gray[100] },
+              { key: 'surfaceSubtle', label: 'Subtle Surface', desc: 'Very light backgrounds', bg: colors.gray[50] }
+            ].map(({ key, label, desc, bg }) => (
               <div 
                 key={key}
                 className="p-4 rounded-lg border"
                 style={{ 
-                  backgroundColor: getSemanticColor(key as keyof typeof colors.semantic),
-                  borderColor: getSemanticColor('borderDefault')
+                  backgroundColor: bg,
+                  borderColor: colors.gray[200]
                 }}
               >
-                <h4 className="font-display text-sm font-semibold mb-2 text-primary">
+                <h4 className="font-display text-sm font-semibold mb-2" style={{ color: colors.navy[700] }}>
                   {label}
                 </h4>
-                <p className="text-xs text-secondary">
+                <p className="text-xs" style={{ color: colors.gray[600] }}>
                   {desc}
                 </p>
               </div>
@@ -200,18 +200,18 @@ export default function DesignTokenExample({ className = '' }: DesignTokenExampl
           </h3>
           <div className="flex flex-wrap gap-3">
             {[
-              { variant: 'default', label: 'Default' },
-              { variant: 'primary', label: 'Primary' },
-              { variant: 'success', label: 'Success' },
-              { variant: 'warning', label: 'Warning' },
-              { variant: 'error', label: 'Error' }
-            ].map(({ variant, label }) => (
+              { variant: 'default', label: 'Default', bg: colors.gray[100], text: colors.gray[700] },
+              { variant: 'primary', label: 'Primary', bg: colors.navy[100], text: colors.navy[700] },
+              { variant: 'success', label: 'Success', bg: colors.success[100], text: colors.success[700] },
+              { variant: 'warning', label: 'Warning', bg: colors.warning[100], text: colors.warning[700] },
+              { variant: 'error', label: 'Error', bg: colors.error[100], text: colors.error[700] }
+            ].map(({ variant, label, bg, text }) => (
               <span 
                 key={variant}
                 className="px-3 py-1 rounded-full text-xs font-medium"
                 style={{
-                  backgroundColor: getSemanticColor(`badge${variant.charAt(0).toUpperCase() + variant.slice(1)}` as keyof typeof colors.semantic),
-                  color: getSemanticColor(`badge${variant.charAt(0).toUpperCase() + variant.slice(1)}Text` as keyof typeof colors.semantic),
+                  backgroundColor: bg,
+                  color: text,
                 }}
               >
                 {label} Badge
@@ -336,12 +336,13 @@ export default function DesignTokenExample({ className = '' }: DesignTokenExampl
               id="success-input"
               placeholder="Valid input..."
               value="john@example.com"
-              className="w-full rounded-lg px-4 py-3 text-base transition-base"
+              className="w-full rounded-lg px-4 py-3 text-base"
               style={{
-                backgroundColor: getSemanticColor('inputBackground'),
-                borderColor: getStatusColor('success', 'border'),
-                color: getSemanticColor('inputText'),
-                border: '1px solid'
+                backgroundColor: colors.white,
+                borderColor: getStatusColor('success', 200),
+                color: colors.gray[900],
+                border: '1px solid',
+                transition: `all ${animation.duration.normal} ${animation.easing.inOut}`
               }}
               readOnly
             />

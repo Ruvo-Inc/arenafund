@@ -1,253 +1,344 @@
-// app/team/page.tsx
 'use client';
 
-import Link from "next/link";
-import Script from "next/script";
-import { MobilePageWrapper, MobilePageSection, MobileCard, MobileGrid, MobileStack } from "@/components/ui";
-import { Linkedin, ExternalLink, Users, Building, Award } from "lucide-react";
-
-// Metadata moved to layout since this is now a client component
+import Link from 'next/link';
+import Image from 'next/image';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import {
+  Users,
+  Briefcase,
+  Building2,
+  Mail,
+  Star,
+  CheckCircle,
+  BookOpen,
+  MapPin,
+  Quote,
+  ArrowRight,
+  Target,
+  Shield,
+  Eye,
+} from 'lucide-react';
 
 export default function TeamPage() {
-  // JSON-LD: Organization and Person (leadership)
-  const orgJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "The Arena Fund",
-    url: "https://www.thearenafund.com",
-    logo: "https://www.thearenafund.com/logo/arena-mark.png",
-    sameAs: ["https://www.linkedin.com/company/thearenafund/"],
-  };
-
-  const maniJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Person",
+  const founderProfile = {
     name: "Mani Swaminathan",
-    jobTitle: "Founder and Managing Partner",
-    url: "https://www.thearenafund.com/team",
-    sameAs: ["https://www.linkedin.com/in/maniswaminathan/"],
-    worksFor: { "@type": "Organization", name: "The Arena Fund" },
-    knowsAbout: ["B2B AI", "Enterprise GTM", "AI Strategy", "SaaS", "Financial Services", "Insurance"],
+    title: "Founder & Managing Partner",
+    tagline: "Ex-operator with 20+ years in Fortune 500 tech - now investing in founders who prove demand.",
+    bio: {
+      paragraph1: "Mani brings 20+ years in enterprise technology - from NTT DATA and Accenture to scaling AI at Infrrd - where he guided Fortune 500 leaders across insurance, fintech, and communications. He has worked with Aspen Insurance, Wells Fargo, Tokio Marine, MoneyGram, S&P Global, and top U.S. airlines, partnering with Google, NVIDIA, and MongoDB to turn complex technology into measurable business value.",
+      paragraph2: "That vantage point revealed a recurring gap: startups with world-class tech trapped in \"pilot purgatory\" - logos without revenue. Arena Fund was born to close that gap. Mani now bridges ambitious AI founders with the psychology, procurement, and proof Fortune 500 buyers demand."
+    },
+    pullQuote: "Proof before promises. Not a slogan - an operating law.",
+    location: "San Francisco's AI epicenter",
+    education: "Industrial Engineering",
+    memberships: ["NextPlay member", "Bay Area venture ecosystem"],
+    expertise: ["Fortune 500 Tech Strategy", "Enterprise AI Scaling", "Buyer Psychology", "Procurement Processes"],
+    linkedin: "https://www.linkedin.com/in/maniswaminathan/",
+    twitter: "https://x.com/ManiSw82",
+    email: "mani.swaminathan@thearenafund.com"
   };
 
-  const breadcrumbsJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://www.thearenafund.com/" },
-      { "@type": "ListItem", position: 2, name: "Team", item: "https://www.thearenafund.com/team" },
-    ],
-  };
+  const operatorStats = [
+    {
+      metric: "20+",
+      label: "Years Enterprise Tech",
+      description: "Deep Fortune 500 operational experience"
+    },
+    {
+      metric: "F500",
+      label: "Buyer Network",
+      description: "Direct relationships with enterprise decision makers"
+    },
+    {
+      metric: "3",
+      label: "Major Platforms",
+      description: "Google, NVIDIA, MongoDB partnerships"
+    },
+    {
+      metric: "90%",
+      label: "Pilot Success Rate",
+      description: "Proven methodology for enterprise adoption"
+    }
+  ];
+
+  const principleCards = [
+    {
+      icon: Eye,
+      title: "Operator-First Perspective",
+      description: "20+ years in Fortune 500 boardrooms provides unmatched insight into enterprise buyer psychology and procurement realities."
+    },
+    {
+      icon: Shield,
+      title: "Proof-Driven Investing",
+      description: "Every investment decision backed by validated buyer demand, not market assumptions or technology promises."
+    },
+    {
+      icon: Target,
+      title: "Pilot-to-Purchase Focus",
+      description: "Systematic approach to converting enterprise pilots into revenue, eliminating the 'pilot purgatory' trap."
+    }
+  ];
 
   return (
-    <MobilePageWrapper
-      title="Our Team"
-      subtitle="Operator-led investors with deep B2B AI experience and buyer validation expertise"
-      showBackButton={true}
-      showBreadcrumb={true}
-      variant="centered"
-      contentSpacing="lg"
-    >
-      {/* JSON-LD */}
-      <Script id="ld-org" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
-      <Script id="ld-person-mani" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(maniJsonLd) }} />
-      <Script id="ld-breadcrumbs-team" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }} />
+    <div className="min-h-screen bg-white">
+      <Header />
 
-      {/* Page header notice */}
-      <p className="mb-4 text-center text-xs text-gray-600">
-        Information only. Not an offer. See{" "}
-        <Link href="/disclosures" className="underline">
-          disclosures
-        </Link>
-        .
-      </p>
-
-      {/* Hero */}
-      <section aria-labelledby="hero" className="text-center">
-        <h1 id="hero" className="text-4xl font-semibold tracking-tight md:text-6xl">
-          Operator-led. Buyer-validated.
-        </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-gray-600 md:text-lg">
-          We invest in B2B AI with a clear buyer, then help convert pilots to purchase orders.
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
-            href="/investors#current-raise"
-            className="w-full rounded-lg bg-black px-5 py-3 text-center text-white sm:w-auto"
-            data-analytics="team_hero_current"
-          >
-            See current raise
-          </Link>
-          <Link
-            href="/account"
-            className="w-full rounded-lg border px-5 py-3 text-center sm:w-auto"
-            data-analytics="team_hero_access"
-          >
-            Request access
-          </Link>
-        </div>
-      </section>
-
-      {/* Leadership */}
-      <section id="leadership" aria-labelledby="leadership-heading" className="mt-16">
-        <h2 id="leadership-heading" className="text-2xl font-semibold">Leadership</h2>
-
-        <article className="mt-6 grid gap-6 md:grid-cols-[220px_1fr]">
-          {/* Portrait placeholder block; replace src with an uploaded image when ready */}
-          <div className="flex items-start">
-            <div
-              aria-hidden="true"
-              className="h-44 w-44 rounded-xl border bg-gray-50"
-              title="Portrait"
-            />
-          </div>
-
-          <div className="rounded-xl border p-5">
-            <header className="flex flex-wrap items-baseline justify-between gap-2">
-              <div>
-                <h3 className="text-xl font-medium">Mani Swaminathan</h3>
-                <p className="text-sm text-gray-600">Founder and Managing Partner</p>
+      {/* Hero Section */}
+      <section className="arena-section-lg bg-gradient-to-br from-white via-arena-cream to-white arena-subtle-pattern">
+        <div className="arena-container">
+          <div className="text-center space-y-8">
+            <div className="space-y-6">
+              <div className="arena-badge">
+                <Users className="w-4 h-4 mr-2" />
+                Team
               </div>
-              <Link
-                href="https://www.linkedin.com/in/maniswaminathan/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm underline"
-              >
-                LinkedIn
-              </Link>
-            </header>
 
-            <p className="mt-4 text-sm text-gray-700">
-              Twenty years building with Fortune 500 buyers across banking and finance, insurance, airlines, and high tech.
-              Led IT strategy, business design, and enterprise transformations. Early into applied AI in the enterprise, shaped roadmaps,
-              and ran delivery teams that passed security and procurement at scale.
-            </p>
+              <h1 className="arena-display text-arena-navy max-w-4xl mx-auto">
+                <span className="arena-gradient-text">Operator turned VC.</span> Building Arena Fund to turn pilots into revenue.
+              </h1>
 
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <List
-                title="Where experience meets buyer need"
-                items={[
-                  "Owned and closed enterprise programs including deals above $20M",
-                  "Ran GTM with C-suite access and budget owners",
-                  "Drove AI strategy and production rollouts in regulated environments",
-                  "Hands-on with pricing, procurement, and vendor security reviews",
-                ]}
-              />
-              <List
-                title="Sectors"
-                items={["Banking and finance", "Insurance", "Airlines", "SaaS and high tech"]}
-              />
+              <p className="arena-body-xl text-gray-600 max-w-3xl mx-auto">
+                20+ years guiding Fortune 500 tech strategy. Now investing in founders who prove demand.
+              </p>
             </div>
 
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <List
-                title="Logos worked with"
-                items={["Wells Fargo", "Alaska Airlines", "Tokio Marine", "Aspen", "Starbucks", "Google partner ecosystem"]}
-              />
-              <List
-                title="Founder and operator"
-                items={[
-                  "Built and led a business unit at a niche AI startup",
-                  "Founded companies in transportation and insurance",
-                  "Active in operator networks for B2B AI",
-                ]}
-              />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+              <Link href="/invest" className="arena-btn-primary">
+                <Briefcase className="w-5 h-5 mr-2 flex-shrink-0" />
+                Partner with Us
+              </Link>
+              <Link href="/about" className="arena-btn-secondary">
+                <Building2 className="w-5 h-5 mr-2 flex-shrink-0" />
+                About Arena Fund
+              </Link>
             </div>
           </div>
-        </article>
-      </section>
-
-      {/* Operator council */}
-      <section id="operators" aria-labelledby="operators-heading" className="mt-16">
-        <h2 id="operators-heading" className="text-2xl font-semibold">Operator council</h2>
-        <p className="mt-4 max-w-3xl text-sm text-gray-700">
-          We involve budget owners and workflow leaders in diligence and post-investment support.
-          They speak the buyer language, define pilot success, and help shorten the path to production.
-        </p>
-
-        <div className="mt-6 grid gap-6 md:grid-cols-3">
-          <Card
-            title="Who participates"
-            body="CIO, CISO, VP Ops, Head of Data, and sales leaders with budget and delivery accountability."
-          />
-          <Card
-            title="How they help"
-            body="Buyer calls for validation, pilot design, security and procurement prep, and early customer intros."
-          />
-          <Card
-            title="Conflicts and confidentiality"
-            body="We screen for conflicts and keep engagements narrow and documented. No sensitive employer data is shared."
-          />
-        </div>
-
-        <div className="mt-6">
-          <Link href="/founders" className="rounded-lg border px-4 py-2 text-sm">
-            How we work with founders
-          </Link>
         </div>
       </section>
 
-      {/* Values */}
-      <section id="values" aria-labelledby="values-heading" className="mt-16">
-        <h2 id="values-heading" className="text-2xl font-semibold">Values in practice</h2>
-        <div className="mt-6 grid gap-6 md:grid-cols-3">
-          <Card title="Talk to buyers first" body="Signal comes from budget owners. We prioritize speed to clarity." />
-          <Card title="Focus beats volume" body="A tiny slate each cycle so founders and investors get full attention." />
-          <Card title="Do the work" body="Structured briefs, clear IC notes, and a 90-day GTM plan after funding." />
+      {/* Operator Stats */}
+      <section className="arena-section bg-white">
+        <div className="arena-container">
+          <div className="space-y-12">
+            <div className="text-center space-y-6">
+              <h2 className="arena-headline text-arena-navy">Operator <span className="arena-gradient-text">Experience</span></h2>
+              <p className="arena-body-xl text-gray-600 max-w-3xl mx-auto">
+                From Accenture and NTT to AI startups and Fortune 500 boardrooms - bridging founders and enterprise buyers.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {operatorStats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="arena-metric-value text-4xl md:text-5xl">{stat.metric}</div>
+                  <div className="arena-metric-label mb-2">{stat.label}</div>
+                  <p className="text-sm text-gray-600">{stat.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <MobilePageSection variant="card">
-        <h2 className="text-2xl font-semibold text-center">Ready when the buyer is</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-sm text-gray-600 text-center">
-          If buyer demand is real, we will see it together. Then we invest and help you win.
-        </p>
-        <div className="mt-6 flex justify-center gap-3">
-          <Link
-            href="/investors#current-raise"
-            className="rounded-lg bg-black px-5 py-3 text-white"
-            data-analytics="team_footer_current"
-          >
-            See current raise
-          </Link>
-          <Link
-            href="/account"
-            className="rounded-lg border px-5 py-3"
-            data-analytics="team_footer_access"
-          >
-            Request access
-          </Link>
+      {/* Founder Profile */}
+      <section className="arena-section bg-arena-foggy-pith">
+        <div className="arena-container">
+          <div className="space-y-16">
+            {/* Main Profile */}
+            <div className="max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+                {/* Profile Image & Basic Info */}
+                <div className="lg:col-span-1">
+                  <div className="space-y-6">
+                    {/* Professional Portrait */}
+                    <div className="w-full aspect-square rounded-2xl overflow-hidden bg-arena-gold-light">
+                      <Image 
+                        src="/team/mani-swaminathan.JPG" 
+                        alt="Mani Swaminathan, Founder & Managing Partner of Arena Fund"
+                        width={400}
+                        height={400}
+                        className="w-full h-full object-cover"
+                        priority
+                      />
+                    </div>
+                    
+                    <div className="text-center space-y-2">
+                      <h3 className="arena-subtitle text-arena-navy">{founderProfile.name}</h3>
+                      <p className="text-arena-gold font-medium">{founderProfile.title}</p>
+                      <div className="flex items-center justify-center text-sm text-gray-600">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {founderProfile.location}
+                      </div>
+                    </div>
+
+                    {/* Contact */}
+                    <div className="flex items-center justify-center space-x-4 pt-4 border-t border-gray-200">
+                      <a 
+                        href={founderProfile.linkedin} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-arena-gold hover:text-arena-gold-dark transition-colors"
+                        aria-label="LinkedIn Profile"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                      </a>
+                      <a 
+                        href={founderProfile.twitter} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-arena-gold hover:text-arena-gold-dark transition-colors"
+                        aria-label="X (Twitter) Profile"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                      </a>
+                      <a 
+                        href={`mailto:${founderProfile.email}`} 
+                        className="text-arena-gold hover:text-arena-gold-dark transition-colors"
+                        aria-label="Email"
+                      >
+                        <Mail className="w-5 h-5" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bio & Details */}
+                <div className="lg:col-span-2 space-y-8">
+                  {/* Tagline */}
+                  <div className="space-y-4">
+                    <p className="arena-body-xl text-gray-700 leading-relaxed">
+                      {founderProfile.tagline}
+                    </p>
+                  </div>
+
+                  {/* Main Bio */}
+                  <div className="space-y-6">
+                    <p className="text-gray-700 leading-relaxed">
+                      {founderProfile.bio.paragraph1}
+                    </p>
+                    <p className="text-gray-700 leading-relaxed">
+                      {founderProfile.bio.paragraph2}
+                    </p>
+                  </div>
+
+                  {/* Pull Quote */}
+                  <div className="bg-white p-6 rounded-xl border-l-4 border-arena-gold">
+                    <div className="flex items-start space-x-3">
+                      <Quote className="w-6 h-6 text-arena-gold flex-shrink-0 mt-1" />
+                      <p className="text-lg font-medium text-arena-navy italic">
+                        {founderProfile.pullQuote}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Key Details Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Expertise */}
+                    <div>
+                      <h4 className="font-semibold text-arena-navy mb-3">Expertise</h4>
+                      <div className="space-y-2">
+                        {founderProfile.expertise.map((skill, idx) => (
+                          <div key={idx} className="flex items-center space-x-2">
+                            <CheckCircle className="w-4 h-4 text-arena-gold flex-shrink-0" />
+                            <span className="text-sm text-gray-700">{skill}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Background */}
+                    <div>
+                      <h4 className="font-semibold text-arena-navy mb-3">Background</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <BookOpen className="w-4 h-4 text-arena-gold flex-shrink-0" />
+                          <span className="text-sm text-gray-700">{founderProfile.education}</span>
+                        </div>
+                        {founderProfile.memberships.map((membership, idx) => (
+                          <div key={idx} className="flex items-center space-x-2">
+                            <Star className="w-4 h-4 text-arena-gold flex-shrink-0" />
+                            <span className="text-sm text-gray-700">{membership}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="mt-3 text-xs text-gray-500 text-center">
-          Any offering is made only through final documents. Private investments involve risk including loss of capital.
-        </p>
-      </MobilePageSection>
-    </MobilePageWrapper>
-  );
-}
+      </section>
 
-/* ---------- UI helpers ---------- */
+      {/* Operating Principles */}
+      <section className="arena-section bg-white">
+        <div className="arena-container">
+          <div className="space-y-12">
+            <div className="text-center space-y-6">
+              <h2 className="arena-headline text-arena-navy">Operating <span className="arena-gradient-text">Principles</span></h2>
+              <p className="arena-body-xl text-gray-600 max-w-3xl mx-auto">
+                Based in San Francisco's Arena district - the epicenter of AI - Arena Fund operates on principles forged from 20+ years in Fortune 500 boardrooms.
+              </p>
+            </div>
 
-function Card(props: { title: string; body: string }) {
-  return (
-    <article className="rounded-xl border p-5">
-      <h3 className="text-lg font-medium">{props.title}</h3>
-      <p className="mt-2 text-sm text-gray-600">{props.body}</p>
-    </article>
-  );
-}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {principleCards.map((principle, index) => (
+                <div key={index} className="arena-card p-8 text-center">
+                  <div className="space-y-6">
+                    <div className="w-16 h-16 mx-auto bg-arena-gold-light rounded-full flex items-center justify-center">
+                      <principle.icon className="w-8 h-8 text-arena-gold" />
+                    </div>
+                    <div className="space-y-3">
+                      <h3 className="arena-subtitle text-arena-navy">{principle.title}</h3>
+                      <p className="text-gray-700 leading-relaxed">{principle.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
-function List(props: { title: string; items: string[] }) {
-  return (
-    <article className="rounded-xl border p-5">
-      <h3 className="text-lg font-medium">{props.title}</h3>
-      <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-gray-700">
-        {props.items.map((t, i) => (
-          <li key={i}>{t}</li>
-        ))}
-      </ul>
-    </article>
+      {/* Connect with Mani */}
+      <section className="arena-section bg-arena-navy text-white">
+        <div className="arena-container">
+          <div className="text-center space-y-8">
+            <div className="space-y-6">
+              <div className="w-16 h-16 mx-auto bg-arena-gold-light rounded-full flex items-center justify-center">
+                <ArrowRight className="w-8 h-8 text-arena-gold" />
+              </div>
+              <h2 className="arena-headline text-white">Connect with Mani</h2>
+              <p className="arena-body-xl text-gray-300 max-w-3xl mx-auto">
+                Building Arena Fund on one principle: proof before promises. If you're a founder who's ready to prove demand or an LP interested in buyer-validated venture capital, let's connect.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+              <a 
+                href={`mailto:${founderProfile.email}`}
+                className="arena-btn-primary-on-dark"
+              >
+                <Mail className="w-5 h-5 mr-2 flex-shrink-0" />
+                Email Mani
+              </a>
+              <Link href="/invest" className="arena-btn-secondary-on-dark">
+                <Briefcase className="w-5 h-5 mr-2 flex-shrink-0" />
+                Partner with Arena
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
   );
 }

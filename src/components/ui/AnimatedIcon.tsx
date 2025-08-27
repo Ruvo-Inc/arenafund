@@ -1,394 +1,199 @@
 'use client';
 
-import React, { forwardRef, ReactElement, cloneElement, useState, useCallback, useMemo, useRef } from 'react';
-import { motion, HTMLMotionProps, Variants, useMotionValue, useTransform } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
 
-interface AnimatedIconProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
-  icon: LucideIcon | ReactElement;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-  variant?: 'default' | 'contained' | 'outlined' | 'ghost' | 'gradient';
-  animation?: 'none' | 'pulse' | 'bounce' | 'spin' | 'scale' | 'rotate' | 'float' | 'wiggle';
-  trigger?: 'hover' | 'focus' | 'always' | 'manual';
+interface AnimatedIconProps {
+  children: React.ReactNode;
+  className?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  animation?: 'pulse' | 'bounce' | 'spin' | 'wiggle' | 'none';
+  hoverAnimation?: 'scale' | 'rotate' | 'glow' | 'none';
   color?: string;
-  backgroundColor?: string;
-  loading?: boolean;
-  error?: boolean;
-  disabled?: boolean;
-  interactive?: boolean;
-  gradientFrom?: string;
-  gradientTo?: string;
-  performance?: 'high' | 'balanced' | 'battery';
-  reducedMotion?: boolean;
-}
-
-const AnimatedIcon = forwardRef<HTMLDivElement, AnimatedIconProps>(
-  ({ 
-    icon,
-    size = 'md',
-    variant = 'default',
-    animation = 'scale',
-    trigger = 'hover',
-    color,
-    backgroundColor,
-    loading = false,
-    error = false,
-    disabled = false,
-    interactive = false,
-    gradientFrom = 'blue-500',
-    gradientTo = 'purple-500',
-    performance = 'balanced',
-    reducedMotion = false,
-    className,
-    ...props 
-  }, ref) => {
-    const [isAnimating, setIsAnimating] = useState(trigger === 'always');
-    const iconRef = useRef<HTMLDivElement>(null);
-    
-    // Motion values for advanced effects
-    const mouseX = useMotionValue(0);
-    const mouseY = useMotionValue(0);
-    const rotateX = useTransform(mouseY, [-50, 50], [10, -10]);
-    const rotateY = useTransform(mouseX, [-50, 50], [-10, 10]);
-
-    const sizes = {
-      xs: 'w-4 h-4',
-      sm: 'w-5 h-5',
-      md: 'w-6 h-6',
-      lg: 'w-8 h-8',
-      xl: 'w-10 h-10',
-      '2xl': 'w-12 h-12',
-    };
-
-    const containerSizes = {
-      xs: 'w-8 h-8',
-      sm: 'w-10 h-10',
-      md: 'w-12 h-12',
-      lg: 'w-16 h-16',
-      xl: 'w-20 h-20',
-      '2xl': 'w-24 h-24',
-    };
-
-    const variants = {
-      default: 'text-slate-600',
-      contained: `rounded-full flex items-center justify-center ${backgroundColor ? `bg-${backgroundColor}` : 'bg-slate-100'} text-slate-700`,
-      outlined: 'rounded-full flex items-center justify-center border-2 border-slate-300 text-slate-600',
-      ghost: 'rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-600',
-      gradient: `rounded-full flex items-center justify-center bg-gradient-to-br from-${gradientFrom} to-${gradientTo} text-white shadow-lg`,
-    };
-
-    const animationVariants = useMemo(() => {
-      const baseTransition = performance === 'battery' ? 
-        { duration: 0.8, ease: 'easeInOut' as const } : 
-        { duration: 0.3, ease: 'easeOut' as const };
-      
-      if (reducedMotion) {
-        return {
-          scale: { scale: [1, 1.05, 1], transition: baseTransition },
-          none: {},
-          pulse: {},
-          bounce: {},
-          spin: {},
-          rotate: {},
-          float: {},
-          wiggle: {}
-        };
-      }
-
-      return {
-        pulse: {
-          scale: [1, 1.1, 1],
-          transition: { duration: 1, repeat: Infinity, ease: 'easeInOut' as const }
-        },
-        bounce: {
-          y: [0, -8, 0],
-          transition: { duration: 0.6, repeat: Infinity, ease: 'easeInOut' as const }
-        },
-        spin: {
-          rotate: 360,
-          transition: { duration: 2, repeat: Infinity, ease: 'linear' as const }
-        },
-        scale: {
-          scale: [1, 1.2, 1],
-          transition: baseTransition
-        },
-        rotate: {
-          rotate: [0, 15, -15, 0],
-          transition: { duration: 0.5, ease: 'easeInOut' as const }
-        },
-        float: {
-          y: [0, -4, 0],
-          transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' as const }
-        },
-        wiggle: {
-          rotate: [0, 5, -5, 5, -5, 0],
-          transition: { duration: 0.5, ease: 'easeInOut' as const }
-        },
-        none: {}
-      };
-    }, [performance, reducedMotion]);
-
-    const loadingVariants: Variants = {
-      loading: {
-        rotate: 360,
-        transition: { duration: 1, repeat: Infinity, ease: 'linear' }
-      }
-    };
-
-    const errorVariants: Variants = {
-      error: {
-        x: [-2, 2, -2, 2, 0],
-        transition: { duration: 0.4, ease: 'easeInOut' }
-      }
-    };
-
-    const baseClasses = cn(
-      'inline-flex items-center justify-center transition-colors duration-200',
-      variant !== 'default' && containerSizes[size],
-      variants[variant],
-      disabled && 'opacity-50 cursor-not-allowed',
-      interactive && 'cursor-pointer touch-target',
-      error && 'text-red-500',
-      className
-    );
-
-    const iconClasses = cn(
-      sizes[size],
-      color && `text-${color}`,
-      'flex-shrink-0'
-    );
-
-    const handleTrigger = useCallback(() => {
-      if (trigger === 'manual' || disabled) return;
-      setIsAnimating(true);
-      const timeout = performance === 'battery' ? 800 : 1000;
-      setTimeout(() => setIsAnimating(false), timeout);
-    }, [trigger, disabled, performance]);
-
-    const handleMouseMove = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
-      if (!iconRef.current || !interactive || disabled) return;
-      
-      const rect = iconRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      mouseX.set(event.clientX - centerX);
-      mouseY.set(event.clientY - centerY);
-    }, [interactive, disabled, mouseX, mouseY]);
-
-    const handleMouseLeave = useCallback(() => {
-      mouseX.set(0);
-      mouseY.set(0);
-    }, [mouseX, mouseY]);
-
-    const shouldAnimate = () => {
-      if (loading || error || disabled) return false;
-      if (trigger === 'always') return true;
-      if (trigger === 'manual') return isAnimating;
-      return false;
-    };
-
-    const getAnimationVariant = () => {
-      if (loading) return 'loading';
-      if (error) return 'error';
-      if (shouldAnimate()) return animation;
-      return 'none';
-    };
-
-    const renderIcon = () => {
-      if (loading) {
-        return (
-          <motion.div
-            className={iconClasses}
-            variants={loadingVariants}
-            animate="loading"
-          >
-            <div className="w-full h-full border-2 border-current border-t-transparent rounded-full" />
-          </motion.div>
-        );
-      }
-
-      if (error) {
-        return (
-          <motion.div
-            className={iconClasses}
-            variants={errorVariants}
-            animate="error"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-full h-full"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="15" y1="9" x2="9" y2="15" />
-              <line x1="9" y1="9" x2="15" y2="15" />
-            </svg>
-          </motion.div>
-        );
-      }
-
-      if (React.isValidElement(icon)) {
-        return cloneElement(icon, {
-          className: cn(iconClasses, (icon.props as any).className),
-        } as any);
-      }
-
-      const IconComponent = icon as LucideIcon;
-      return <IconComponent className={iconClasses} />;
-    };
-
-    return (
-      <motion.div
-        className={baseClasses}
-        variants={animationVariants}
-        animate={getAnimationVariant()}
-        ref={(node) => {
-          (iconRef as any).current = node;
-          if (typeof ref === 'function') ref(node);
-          else if (ref) (ref as any).current = node;
-        }}
-        onMouseEnter={trigger === 'hover' ? handleTrigger : undefined}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        onFocus={trigger === 'focus' ? handleTrigger : undefined}
-        onClick={interactive ? handleTrigger : undefined}
-        whileHover={interactive && !disabled && performance !== 'battery' ? { 
-          scale: 1.05
-        } : {}}
-        whileTap={interactive && !disabled ? { scale: 0.95 } : {}}
-        tabIndex={interactive ? 0 : undefined}
-        role={interactive ? 'button' : undefined}
-        aria-label={interactive ? 'Animated icon button' : undefined}
-        aria-disabled={disabled}
-        style={{
-          transformPerspective: interactive ? 1000 : undefined,
-          willChange: performance === 'high' ? 'transform' : undefined,
-          rotateX: interactive ? rotateX : undefined,
-          rotateY: interactive ? rotateY : undefined
-        }}
-        {...props}
-      >
-        {renderIcon()}
-
-        {/* Gradient overlay for enhanced effects */}
-        {variant === 'gradient' && (
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
-        )}
-
-        {/* Ripple effect for interactive icons */}
-        {interactive && (
-          <motion.div
-            className="absolute inset-0 rounded-full bg-current opacity-0"
-            initial={{ scale: 0, opacity: 0.3 }}
-            animate={{ scale: 2, opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            key={isAnimating ? 'animating' : 'idle'}
-          />
-        )}
-      </motion.div>
-    );
-  }
-);
-
-AnimatedIcon.displayName = 'AnimatedIcon';
-
-// Convenience wrapper for common icon patterns
-interface IconButtonProps extends Omit<AnimatedIconProps, 'interactive'> {
   onClick?: () => void;
-  'aria-label': string;
 }
 
-const IconButton = forwardRef<HTMLDivElement, IconButtonProps>(
-  ({ onClick, ...props }, ref) => (
-    <AnimatedIcon
-      ref={ref}
-      interactive
+interface IconButtonProps extends AnimatedIconProps {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  disabled?: boolean;
+  loading?: boolean;
+}
+
+interface PresetIconProps {
+  name: 'check' | 'cross' | 'arrow' | 'star' | 'heart' | 'settings' | 'user' | 'search';
+  className?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  color?: string;
+}
+
+const sizeClasses = {
+  sm: 'w-4 h-4',
+  md: 'w-6 h-6',
+  lg: 'w-8 h-8',
+  xl: 'w-12 h-12',
+};
+
+const animations = {
+  pulse: {
+    animate: { scale: [1, 1.1, 1] },
+    transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+  },
+  bounce: {
+    animate: { y: [0, -10, 0] },
+    transition: { duration: 1, repeat: Infinity, ease: 'easeInOut' }
+  },
+  spin: {
+    animate: { rotate: 360 },
+    transition: { duration: 2, repeat: Infinity, ease: 'linear' }
+  },
+  wiggle: {
+    animate: { rotate: [-5, 5, -5] },
+    transition: { duration: 0.5, repeat: Infinity, ease: 'easeInOut' }
+  },
+  none: {}
+};
+
+const hoverAnimations = {
+  scale: { scale: 1.1 },
+  rotate: { rotate: 180 },
+  glow: { filter: 'drop-shadow(0 0 8px currentColor)' },
+  none: {}
+};
+
+const presetIcons = {
+  check: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  ),
+  cross: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  ),
+  arrow: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M5 12h14M12 5l7 7-7 7" />
+    </svg>
+  ),
+  star: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  ),
+  heart: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  ),
+  settings: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  ),
+  user: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  ),
+  search: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="11" cy="11" r="8" />
+      <path d="M21 21l-4.35-4.35" />
+    </svg>
+  ),
+};
+
+export function AnimatedIcon({
+  children,
+  className,
+  size = 'md',
+  animation = 'none',
+  hoverAnimation = 'none',
+  color,
+  onClick,
+  ...props
+}: AnimatedIconProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+      className={cn(
+        'inline-flex items-center justify-center',
+        sizeClasses[size],
+        onClick && 'cursor-pointer',
+        className
+      )}
+      style={{ color }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
       onClick={onClick}
+      whileHover={hoverAnimations[hoverAnimation]}
+      {...animations[animation]}
       {...props}
-    />
-  )
-);
-
-IconButton.displayName = 'IconButton';
-
-// Preset animated icons for common use cases
-interface PresetIconProps extends Omit<AnimatedIconProps, 'icon' | 'animation'> {
-  type: 'loading' | 'success' | 'error' | 'warning' | 'info';
+    >
+      <AnimatePresence mode="wait">
+        {children}
+      </AnimatePresence>
+    </motion.div>
+  );
 }
 
-const PresetIcon = forwardRef<HTMLDivElement, PresetIconProps>(
-  ({ type, ...props }, ref) => {
-    const presets = {
-      loading: {
-        icon: (
-          <div className="w-full h-full border-2 border-current border-t-transparent rounded-full" />
-        ),
-        animation: 'spin' as const,
-        trigger: 'always' as const,
-      },
-      success: {
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22,4 12,14.01 9,11.01" />
-          </svg>
-        ),
-        animation: 'scale' as const,
-        color: 'green-500',
-      },
-      error: {
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="15" y1="9" x2="9" y2="15" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-          </svg>
-        ),
-        animation: 'wiggle' as const,
-        color: 'red-500',
-      },
-      warning: {
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-        ),
-        animation: 'pulse' as const,
-        color: 'yellow-500',
-      },
-      info: {
-        icon: (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="16" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12.01" y2="8" />
-          </svg>
-        ),
-        animation: 'float' as const,
-        color: 'blue-500',
-      },
-    };
+export function IconButton({
+  children,
+  variant = 'primary',
+  disabled = false,
+  loading = false,
+  className,
+  ...props
+}: IconButtonProps) {
+  const variantClasses = {
+    primary: 'bg-primary text-white hover:bg-primary-hover',
+    secondary: 'bg-secondary text-foreground hover:bg-secondary-hover',
+    outline: 'border border-border bg-background hover:bg-secondary',
+    ghost: 'hover:bg-secondary',
+  };
 
-    const preset = presets[type];
+  return (
+    <motion.button
+      className={cn(
+        'inline-flex items-center justify-center rounded-lg transition-colors',
+        'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+        variantClasses[variant],
+        className
+      )}
+      disabled={disabled || loading}
+      whileHover={!disabled && !loading ? { scale: 1.05 } : {}}
+      whileTap={!disabled && !loading ? { scale: 0.95 } : {}}
+      {...props}
+    >
+      {loading ? (
+        <motion.div
+          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        />
+      ) : (
+        children
+      )}
+    </motion.button>
+  );
+}
 
-    return (
-      <AnimatedIcon
-        ref={ref}
-        {...preset}
-        {...props}
-      />
-    );
-  }
-);
+export function PresetIcon({ name, className, size = 'md', color }: PresetIconProps) {
+  return (
+    <AnimatedIcon
+      className={cn(sizeClasses[size], className)}
+      color={color}
+    >
+      {presetIcons[name]}
+    </AnimatedIcon>
+  );
+}
 
-PresetIcon.displayName = 'PresetIcon';
-
-export { AnimatedIcon, IconButton, PresetIcon };
+// Default export for convenience
 export default AnimatedIcon;

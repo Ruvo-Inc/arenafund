@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 export async function POST(request: NextRequest) {
   try {
+    const db = getAdminDb();
     const now = new Date();
     const closesAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 21); // +21 days
 
@@ -28,12 +28,12 @@ export async function POST(request: NextRequest) {
       updatedAt: now
     };
 
-    // Create the acme-seed document
-    await setDoc(doc(db, 'raises', 'acme-seed'), raise);
+    // Create the acme-seed document using Admin SDK
+    await db.collection('raises').doc('acme-seed').set(raise);
     console.log('✅ Created raises/acme-seed');
 
     // Also create the current document as fallback
-    await setDoc(doc(db, 'raises', 'current'), { ...raise, updatedAt: new Date() });
+    await db.collection('raises').doc('current').set({ ...raise, updatedAt: new Date() });
     console.log('✅ Created raises/current');
 
     return NextResponse.json({ 

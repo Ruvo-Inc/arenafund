@@ -1,196 +1,122 @@
-import { useEffect, useRef, useState } from 'react';
+import { useScroll, useTransform, MotionValue } from 'framer-motion';
 import { useReducedMotion } from './useReducedMotion';
+import { useRef, useState, useEffect } from 'react';
+
+interface ScrollAnimationOptions {
+  inputRange?: [number, number];
+  outputRange?: [number, number];
+  clamp?: boolean;
+  threshold?: number;
+  triggerOnce?: boolean;
+}
 
 export interface ScrollAnimationConfig {
-  /** Intersection threshold (0-1) for triggering animation */
+  inputRange?: [number, number];
+  outputRange?: [number, number];
+  clamp?: boolean;
   threshold?: number;
-  /** Root margin for intersection observer */
   rootMargin?: string;
-  /** Whether animation should trigger only once */
-  triggerOnce?: boolean;
-  /** Delay before animation starts (ms) */
-  delay?: number;
-  /** Disable animations entirely */
-  disabled?: boolean;
-  /** Custom intersection observer options */
-  observerOptions?: Omit<IntersectionObserverInit, 'threshold' | 'rootMargin'>;
 }
 
-export interface ScrollAnimationState {
-  /** Whether element is currently visible in viewport */
-  isVisible: boolean;
-  /** Whether animation has been triggered */
+interface ScrollAnimationReturn {
+  scrollY: MotionValue<number>;
+  scrollYProgress: MotionValue<number>;
+  opacity: MotionValue<number>;
+  y: MotionValue<number>;
+  scale: MotionValue<number>;
+  blur: MotionValue<number>;
+  createTransform: (options: ScrollAnimationOptions) => MotionValue<number>;
+  ref: React.RefObject<HTMLElement | null>;
   hasTriggered: boolean;
-  /** Animation progress (0-1) */
-  progress: number;
-}
-
-export interface ScrollAnimationReturn extends ScrollAnimationState {
-  /** Ref to attach to the animated element */
-  ref: React.RefObject<HTMLElement>;
-  /** Whether animations should be active */
   shouldAnimate: boolean;
 }
 
-/**
- * Production-grade scroll animation hook with intersection observer optimization
- * Handles reduced motion, performance throttling, and accessibility compliance
- */
-export function useScrollAnimation(config: ScrollAnimationConfig = {}) {
+export function useScrollAnimation(options: ScrollAnimationOptions = {}): ScrollAnimationReturn {
+  const { scrollY, scrollYProgress } = useScroll();
+  const prefersReducedMotion = useReducedMotion();
+  const ref = useRef<HTMLElement>(null);
+  const [hasTriggered, setHasTriggered] = useState(false);
+  const [shouldAnimate, setShouldAnimate] = useState(!prefersReducedMotion);
+
   const {
+    inputRange = [0, 100],
+    outputRange = [0, 1],
+    clamp = true,
     threshold = 0.1,
-    rootMargin = '0px',
-    triggerOnce = true,
-    delay = 0,
-    disabled = false
-  } = config;
+    triggerOnce = false,
+  } = options;
 
-  const elementRef = useRef<HTMLElement>(null);
-  const [state, setState] = useState<ScrollAnimationState>({
-    isVisible: false,
-    hasTriggered: false,
-    progress: 0
-  });
+  // Common transforms
+  const opacity = useTransform(
+    scrollY,
+    [0, 50, 100],
+    [1, 0.8, 0.6],
+    { clamp }
+  );
 
-  const prefersReducedMotion = useReducedMotion();
-  const shouldAnimate = !disabled && !prefersReducedMotion;
+  const y = useTransform(
+    scrollY,
+    [0, 100],
+    [0, -20],
+    { clamp }
+  );
 
-  useEffect(() => {
-    const element = elementRef.current;
-    if (!element || !shouldAnimate) {
-      // Immediate visibility for accessibility and reduced motion
-      if (!shouldAnimate) {
-        setState({
-          isVisible: true,
-          hasTriggered: true,
-          progress: 1
-        });
-      }
-      return;
-    }
+  const scale = useTransform(
+    scrollY,
+    [0, 100],
+    [1, 0.95],
+    { clamp }
+  );
 
-    // Performance monitoring
-    const startTime = performance.now();
+  const blur = useTransform(
+    scrollY,
+    [0, 50, 100],
+    [0, 2, 4],
+    { clamp }
+  );
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const isIntersecting = entry.isIntersecting;
-          const progress = Math.min(entry.intersectionRatio / threshold, 1);
+  // Helper function to create custom transforms
+  const createTransform = (transformOptions: ScrollAnimationOptions) => {
+    const {
+      inputRange: customInputRange = inputRange,
+      outputRange: customOutputRange = outputRange,
+      clamp: customClamp = clamp
+    } = transformOptions;
 
-          setState(prevState => {
-            const newState = {
-              isVisible: isIntersecting,
-              hasTriggered: prevState.hasTriggered || isIntersecting,
-              progress: isIntersecting ? progress : (triggerOnce && prevState.hasTriggered ? 1 : 0)
-            };
-
-            // Apply delay if specified
-            if (delay > 0 && isIntersecting && !prevState.hasTriggered) {
-              setTimeout(() => {
-                setState(current => ({
-                  ...current,
-                  hasTriggered: true
-                }));
-              }, delay);
-              return { ...newState, hasTriggered: false };
-            }
-
-            return newState;
-          });
-        });
-      },
-      {
-        threshold,
-        rootMargin
-      }
+    return useTransform(
+      scrollY,
+      customInputRange,
+      customOutputRange,
+      { clamp: customClamp }
     );
+  };
 
-    observer.observe(element);
-
-    return () => {
-      observer.unobserve(element);
-      
-      // Performance logging for production monitoring
-      const endTime = performance.now();
-      if (endTime - startTime > 16.67) { // > 1 frame at 60fps
-        console.warn(`ScrollAnimation performance warning: ${endTime - startTime}ms`);
-      }
+  // Disable animations if user prefers reduced motion
+  if (prefersReducedMotion) {
+    return {
+      scrollY,
+      scrollYProgress,
+      opacity: useTransform(scrollY, [0, 1], [1, 1]),
+      y: useTransform(scrollY, [0, 1], [0, 0]),
+      scale: useTransform(scrollY, [0, 1], [1, 1]),
+      blur: useTransform(scrollY, [0, 1], [0, 0]),
+      createTransform: () => useTransform(scrollY, [0, 1], [0, 0]),
+      ref,
+      hasTriggered: true,
+      shouldAnimate: false,
     };
-  }, [threshold, rootMargin, triggerOnce, delay, shouldAnimate]);
+  }
 
   return {
-    ref: elementRef,
-    ...state,
-    shouldAnimate
-  } as ScrollAnimationReturn;
-}
-
-/**
- * High-performance scroll progress tracking for enterprise applications
- * Optimized for smooth 60fps performance with requestAnimationFrame throttling
- */
-export function useScrollProgress(config: { threshold?: number } = {}) {
-  const { threshold = 0 } = config;
-  const elementRef = useRef<HTMLElement>(null);
-  const [progress, setProgress] = useState(0);
-  const prefersReducedMotion = useReducedMotion();
-
-  useEffect(() => {
-    const element = elementRef.current;
-    if (!element || prefersReducedMotion) {
-      setProgress(1);
-      return;
-    }
-
-    const handleScroll = () => {
-      const rect = element.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      // Calculate how much of the element has been scrolled past
-      const elementTop = rect.top;
-      const elementHeight = rect.height;
-      
-      // Progress from 0 to 1 as element scrolls through viewport
-      let scrollProgress = 0;
-      
-      if (elementTop < windowHeight && elementTop + elementHeight > 0) {
-        const visibleHeight = Math.min(windowHeight - elementTop, elementHeight);
-        scrollProgress = Math.max(0, visibleHeight / elementHeight);
-      } else if (elementTop + elementHeight <= 0) {
-        scrollProgress = 1;
-      }
-      
-      setProgress(Math.min(scrollProgress, 1));
-    };
-
-    // Initial calculation
-    handleScroll();
-
-    // Throttled scroll listener for performance
-    let ticking = false;
-    const throttledScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          handleScroll();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', throttledScroll, { passive: true });
-    window.addEventListener('resize', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', throttledScroll);
-      window.removeEventListener('resize', handleScroll);
-    };
-  }, [threshold, prefersReducedMotion]);
-
-  return {
-    ref: elementRef,
-    progress,
-    shouldAnimate: !prefersReducedMotion
+    scrollY,
+    scrollYProgress,
+    opacity,
+    y,
+    scale,
+    blur,
+    createTransform,
+    ref,
+    hasTriggered,
+    shouldAnimate,
   };
 }

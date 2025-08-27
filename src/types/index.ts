@@ -81,6 +81,27 @@ export interface UploadUrlResponse {
   fileName: string;
 }
 
+// File Upload Types for Application Form
+export interface SignedUrlRequest {
+  fileName: string;
+  fileType: string;
+  fileSize?: number;
+}
+
+export interface SignedUrlResponse {
+  uploadUrl: string;
+  fileRef: string;
+  expiresAt: string;
+  maxSize: number;
+  allowedTypes: string[];
+}
+
+export interface FileUploadResponse {
+  success: boolean;
+  fileRef?: string;
+  error?: string;
+}
+
 // Component Props Types
 export interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
@@ -132,3 +153,6 @@ export interface SearchParams {
   filters?: Record<string, any>;
   pagination?: PaginationParams;
 }
+
+// Re-export application form types
+export * from './application';

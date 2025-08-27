@@ -1,60 +1,56 @@
-'use client';
+/**
+ * Interaction feedback hooks for enhanced user experience
+ * Provides haptic feedback, ripple effects, and interaction states
+ */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-export interface InteractionState {
+interface InteractionState {
+  isPressed: boolean;
   isHovered: boolean;
   isFocused: boolean;
-  isPressed: boolean;
   isLoading: boolean;
   isDisabled: boolean;
 }
 
-export interface InteractionFeedbackOptions {
-  disabled?: boolean;
-  loading?: boolean;
-  onHover?: (isHovered: boolean) => void;
-  onFocus?: (isFocused: boolean) => void;
-  onPress?: (isPressed: boolean) => void;
-  hapticFeedback?: boolean;
-}
-
-export interface InteractionHandlers {
+interface InteractionHandlers {
+  onMouseDown: () => void;
+  onMouseUp: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onFocus: () => void;
   onBlur: () => void;
-  onMouseDown: () => void;
-  onMouseUp: () => void;
   onTouchStart: () => void;
   onTouchEnd: () => void;
 }
 
-/**
- * Hook for managing interaction states and providing consistent feedback
- * across all interactive elements in the Arena Fund application
- */
-export function useInteractionFeedback(options: InteractionFeedbackOptions = {}) {
-  const {
-    disabled = false,
-    loading = false,
-    onHover,
-    onFocus,
-    onPress,
-    hapticFeedback = false,
-  } = options;
+interface UseInteractionFeedbackOptions {
+  disabled?: boolean;
+  loading?: boolean;
+  hapticFeedback?: boolean;
+  longPressAction?: () => void;
+  longPressDuration?: number;
+}
 
+export function useInteractionFeedback({
+  disabled = false,
+  loading = false,
+  hapticFeedback = false,
+  longPressAction,
+  longPressDuration = 500,
+}: UseInteractionFeedbackOptions = {}) {
   const [state, setState] = useState<InteractionState>({
+    isPressed: false,
     isHovered: false,
     isFocused: false,
-    isPressed: false,
     isLoading: loading,
     isDisabled: disabled,
   });
 
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressTriggeredRef = useRef(false);
 
-  // Update loading and disabled states when props change
+  // Update state when props change
   useEffect(() => {
     setState(prev => ({
       ...prev,
@@ -63,104 +59,114 @@ export function useInteractionFeedback(options: InteractionFeedbackOptions = {})
     }));
   }, [loading, disabled]);
 
-  // Provide haptic feedback on supported devices
+  // Haptic feedback function
   const triggerHapticFeedback = useCallback(() => {
     if (hapticFeedback && 'vibrate' in navigator) {
-      navigator.vibrate(10); // Very short vibration
+      navigator.vibrate(10);
     }
   }, [hapticFeedback]);
 
-  const handleMouseEnter = useCallback(() => {
-    if (disabled || loading) return;
-    
-    setState(prev => ({ ...prev, isHovered: true }));
-    onHover?.(true);
-  }, [disabled, loading, onHover]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (disabled || loading) return;
-    
-    setState(prev => ({ 
-      ...prev, 
-      isHovered: false, 
-      isPressed: false // Reset pressed state when mouse leaves
-    }));
-    onHover?.(false);
-    onPress?.(false);
-  }, [disabled, loading, onHover, onPress]);
-
-  const handleFocus = useCallback(() => {
-    if (disabled || loading) return;
-    
-    setState(prev => ({ ...prev, isFocused: true }));
-    onFocus?.(true);
-  }, [disabled, loading, onFocus]);
-
-  const handleBlur = useCallback(() => {
-    if (disabled || loading) return;
-    
-    setState(prev => ({ 
-      ...prev, 
-      isFocused: false,
-      isPressed: false // Reset pressed state when focus is lost
-    }));
-    onFocus?.(false);
-    onPress?.(false);
-  }, [disabled, loading, onFocus, onPress]);
-
+  // Mouse handlers
   const handleMouseDown = useCallback(() => {
     if (disabled || loading) return;
     
     setState(prev => ({ ...prev, isPressed: true }));
-    onPress?.(true);
     triggerHapticFeedback();
-  }, [disabled, loading, onPress, triggerHapticFeedback]);
+
+    // Start long press timer
+    if (longPressAction) {
+      isLongPressTriggeredRef.current = false;
+      longPressTimeoutRef.current = setTimeout(() => {
+        isLongPressTriggeredRef.current = true;
+        longPressAction();
+        triggerHapticFeedback();
+      }, longPressDuration);
+    }
+  }, [disabled, loading, longPressAction, longPressDuration, triggerHapticFeedback]);
 
   const handleMouseUp = useCallback(() => {
-    if (disabled || loading) return;
-    
     setState(prev => ({ ...prev, isPressed: false }));
-    onPress?.(false);
-  }, [disabled, loading, onPress]);
+    
+    // Clear long press timer
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  }, []);
 
+  const handleMouseEnter = useCallback(() => {
+    if (disabled || loading) return;
+    setState(prev => ({ ...prev, isHovered: true }));
+  }, [disabled, loading]);
+
+  const handleMouseLeave = useCallback(() => {
+    setState(prev => ({ 
+      ...prev, 
+      isHovered: false, 
+      isPressed: false 
+    }));
+    
+    // Clear long press timer
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Focus handlers
+  const handleFocus = useCallback(() => {
+    if (disabled || loading) return;
+    setState(prev => ({ ...prev, isFocused: true }));
+  }, [disabled, loading]);
+
+  const handleBlur = useCallback(() => {
+    setState(prev => ({ ...prev, isFocused: false }));
+  }, []);
+
+  // Touch handlers
   const handleTouchStart = useCallback(() => {
     if (disabled || loading) return;
     
     setState(prev => ({ ...prev, isPressed: true }));
-    onPress?.(true);
     triggerHapticFeedback();
-  }, [disabled, loading, onPress, triggerHapticFeedback]);
+
+    // Start long press timer for touch
+    if (longPressAction) {
+      isLongPressTriggeredRef.current = false;
+      longPressTimeoutRef.current = setTimeout(() => {
+        isLongPressTriggeredRef.current = true;
+        longPressAction();
+        triggerHapticFeedback();
+      }, longPressDuration);
+    }
+  }, [disabled, loading, longPressAction, longPressDuration, triggerHapticFeedback]);
 
   const handleTouchEnd = useCallback(() => {
-    if (disabled || loading) return;
+    setState(prev => ({ ...prev, isPressed: false }));
     
-    // Delay the reset to allow for visual feedback
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    // Clear long press timer
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
     }
-    
-    timeoutRef.current = setTimeout(() => {
-      setState(prev => ({ ...prev, isPressed: false }));
-      onPress?.(false);
-    }, 150);
-  }, [disabled, loading, onPress]);
+  }, []);
 
-  // Cleanup timeout on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (longPressTimeoutRef.current) {
+        clearTimeout(longPressTimeoutRef.current);
       }
     };
   }, []);
 
   const handlers: InteractionHandlers = {
+    onMouseDown: handleMouseDown,
+    onMouseUp: handleMouseUp,
     onMouseEnter: handleMouseEnter,
     onMouseLeave: handleMouseLeave,
     onFocus: handleFocus,
     onBlur: handleBlur,
-    onMouseDown: handleMouseDown,
-    onMouseUp: handleMouseUp,
     onTouchStart: handleTouchStart,
     onTouchEnd: handleTouchEnd,
   };
@@ -168,176 +174,37 @@ export function useInteractionFeedback(options: InteractionFeedbackOptions = {})
   return {
     state,
     handlers,
+    isLongPressTriggered: isLongPressTriggeredRef.current,
   };
 }
 
-/**
- * Hook for managing loading states with automatic timeout
- */
-export function useLoadingState(initialLoading = false, timeout = 30000) {
-  const [isLoading, setIsLoading] = useState(initialLoading);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  const startLoading = useCallback(() => {
-    setIsLoading(true);
-    
-    // Auto-timeout loading state
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = setTimeout(() => {
-      setIsLoading(false);
-    }, timeout);
-  }, [timeout]);
-
-  const stopLoading = useCallback(() => {
-    setIsLoading(false);
-    
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  return {
-    isLoading,
-    startLoading,
-    stopLoading,
-  };
-}
-
-/**
- * Hook for managing form field feedback states
- */
-export function useFieldFeedback() {
-  const [feedback, setFeedback] = useState<{
-    type: 'success' | 'error' | 'warning' | null;
-    message: string;
-    timestamp: number;
-  }>({
-    type: null,
-    message: '',
-    timestamp: 0,
-  });
-
-  const showSuccess = useCallback((message: string) => {
-    setFeedback({
-      type: 'success',
-      message,
-      timestamp: Date.now(),
-    });
-  }, []);
-
-  const showError = useCallback((message: string) => {
-    setFeedback({
-      type: 'error',
-      message,
-      timestamp: Date.now(),
-    });
-  }, []);
-
-  const showWarning = useCallback((message: string) => {
-    setFeedback({
-      type: 'warning',
-      message,
-      timestamp: Date.now(),
-    });
-  }, []);
-
-  const clearFeedback = useCallback(() => {
-    setFeedback({
-      type: null,
-      message: '',
-      timestamp: 0,
-    });
-  }, []);
-
-  return {
-    feedback,
-    showSuccess,
-    showError,
-    showWarning,
-    clearFeedback,
-  };
-}
-
-/**
- * Hook for managing hover card states with delay
- */
-export function useHoverCard(delay = 300) {
-  const [isVisible, setIsVisible] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  const showCard = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = setTimeout(() => {
-      setIsVisible(true);
-    }, delay);
-  }, [delay]);
-
-  const hideCard = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    setIsVisible(false);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  return {
-    isVisible,
-    showCard,
-    hideCard,
-  };
-}
-
-/**
- * Hook for managing ripple effect animations
- */
+// Ripple effect hook
 export function useRippleEffect() {
-  const [ripples, setRipples] = useState<Array<{
-    id: number;
-    x: number;
-    y: number;
-    timestamp: number;
-  }>>([]);
+  const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
 
-  const createRipple = useCallback((event: React.MouseEvent | React.TouchEvent) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
-    const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
+  const createRipple = useCallback((event: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
+    const element = event.currentTarget;
+    const rect = element.getBoundingClientRect();
     
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    let clientX: number, clientY: number;
+    
+    if ('touches' in event) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    }
     
     const newRipple = {
       id: Date.now(),
-      x,
-      y,
-      timestamp: Date.now(),
+      x: clientX - rect.left,
+      y: clientY - rect.top,
     };
-    
+
     setRipples(prev => [...prev, newRipple]);
-    
-    // Remove ripple after animation completes
+
+    // Remove ripple after animation
     setTimeout(() => {
       setRipples(prev => prev.filter(ripple => ripple.id !== newRipple.id));
     }, 600);
@@ -347,4 +214,63 @@ export function useRippleEffect() {
     ripples,
     createRipple,
   };
+}
+
+export function useHoverCard() {
+  const [isHovered, setIsHovered] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const handlers = {
+    onMouseEnter: useCallback(() => setIsHovered(true), []),
+    onMouseLeave: useCallback(() => setIsHovered(false), []),
+    onMouseMove: useCallback((event: React.MouseEvent) => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      setPosition({
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      });
+    }, []),
+  };
+
+  return { isHovered, position, handlers };
+}
+
+export function useLoadingState(isLoading: boolean) {
+  const [showSpinner, setShowSpinner] = useState(false);
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    
+    if (isLoading) {
+      timeout = setTimeout(() => setShowSpinner(true), 200);
+    } else {
+      setShowSpinner(false);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
+
+  return { showSpinner };
+}
+
+export function useFieldFeedback() {
+  const [fieldState, setFieldState] = useState({
+    isValid: true,
+    isDirty: false,
+    isTouched: false,
+  });
+
+  const setValid = useCallback((valid: boolean) => {
+    setFieldState(prev => ({ ...prev, isValid: valid }));
+  }, []);
+
+  const setDirty = useCallback(() => {
+    setFieldState(prev => ({ ...prev, isDirty: true }));
+  }, []);
+
+  const setTouched = useCallback(() => {
+    setFieldState(prev => ({ ...prev, isTouched: true }));
+  }, []);
+
+  return { fieldState, setValid, setDirty, setTouched };
 }

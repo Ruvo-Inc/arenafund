@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app'
+import { initializeApp, getApps } from 'firebase/app'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
@@ -12,16 +12,29 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig)
+// Only initialize Firebase if we're in a browser environment and have valid config
+let app: any = null
+let auth: any = null
+let db: any = null
+let googleProvider: any = null
 
-// Initialize Firebase Authentication and get a reference to the service
-export const auth = getAuth(app)
+if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
+  // Initialize Firebase only on client side with valid config
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig)
+  } else {
+    app = getApps()[0]
+  }
+  
+  // Initialize Firebase Authentication and get a reference to the service
+  auth = getAuth(app)
+  
+  // Initialize Google Auth Provider
+  googleProvider = new GoogleAuthProvider()
+  
+  // Initialize Cloud Firestore and get a reference to the service
+  db = getFirestore(app)
+}
 
-// Initialize Google Auth Provider
-export const googleProvider = new GoogleAuthProvider()
-
-// Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app)
-
+export { auth, googleProvider, db }
 export default app

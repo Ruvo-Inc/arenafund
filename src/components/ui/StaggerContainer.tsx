@@ -21,7 +21,7 @@ export interface StaggerContainerProps {
     hidden: any;
     visible: any;
   };
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
   onAnimationStart?: () => void;
   onAnimationComplete?: () => void;
 }
@@ -34,7 +34,7 @@ export interface StaggerItemProps {
     hidden: any;
     visible: any;
   };
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
 }
 
 // Animation variants for container

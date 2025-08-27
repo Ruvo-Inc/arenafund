@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="11" failures="0" errors="0" time="0.705">
+    <testsuite name="src/test/seo/content-optimization.test.ts" timestamp="2025-08-27T02:42:17.815Z" hostname="Manis-Mac-mini.local" tests="11" failures="0" errors="0" skipped="0" time="0.006804542">
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; SEO Content Analysis &gt; should analyze content for SEO optimization opportunities" time="0.00119225">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; SEO Content Analysis &gt; should generate optimized meta tags" time="0.00032825">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; SEO Content Analysis &gt; should extract and validate structured data" time="0.000454208">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; AI Content Optimization &gt; should structure content for AI consumption" time="0.000236625">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; AI Content Optimization &gt; should extract factual statements for AI training" time="0.001198584">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; AI Content Optimization &gt; should generate proper citations for AI reference" time="0.000324167">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; AI Content Optimization &gt; should calculate AI readability score" time="0.000159667">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; Content Quality Validation &gt; should validate content meets SEO requirements" time="0.000211667">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; Content Quality Validation &gt; should validate content meets AI optimization requirements" time="0.000249417">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; Performance Impact Testing &gt; should ensure optimization does not impact performance" time="0.000149709">
+        </testcase>
+        <testcase classname="src/test/seo/content-optimization.test.ts" name="Content Optimization Testing Suite &gt; Performance Impact Testing &gt; should handle large content efficiently" time="0.00012825">
+        </testcase>
+    </testsuite>
+</testsuites>

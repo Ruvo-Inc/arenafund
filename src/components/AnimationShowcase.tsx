@@ -12,6 +12,7 @@ import {
   useCountUp, 
   useStaggeredAnimation,
   useProgressBar,
+  useScrollAnimation,
   useHoverAnimation,
   useFocusAnimation,
   useLoadingState
@@ -22,28 +23,28 @@ export const AnimationShowcase: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progressTarget, setProgressTarget] = useState(75);
   
-  // Scroll reveal examples - using simplified refs for now
-  const fadeInRef = React.useRef<HTMLDivElement>(null);
-  const slideUpRef = React.useRef<HTMLDivElement>(null);
-  const slideLeftRef = React.useRef<HTMLDivElement>(null);
-  const scaleInRef = React.useRef<HTMLDivElement>(null);
-  
   // Count up example
-  const { ref: countRef, value: countValue, start: startCount } = useCountUp(1250000, 2000);
+  const countValue = useCountUp(1250000, 2000);
   
   // Staggered animation example
-  const { ref: staggerRef, trigger: triggerStagger } = useStaggeredAnimation('animate-slide-in-up', 150);
+  const { visibleItems, startAnimation: triggerStagger } = useStaggeredAnimation(5, 150);
   
   // Progress bar example
-  const { percentage, triggerAnimation } = useProgressBar(progressTarget, true);
+  const percentage = useProgressBar(progressTarget, 2000);
+  
+  // Scroll animation examples
+  const { ref: fadeInRef, isVisible: fadeInVisible } = useScrollAnimation(0.3);
+  const { ref: slideUpRef, isVisible: slideUpVisible } = useScrollAnimation(0.3);
+  const { ref: slideLeftRef, isVisible: slideLeftVisible } = useScrollAnimation(0.3);
+  const { ref: scaleInRef, isVisible: scaleInVisible } = useScrollAnimation(0.3);
   
   // Hover and focus examples
-  const hoverLiftRef = useHoverAnimation('lift') as React.RefObject<HTMLDivElement>;
-  const hoverScaleRef = useHoverAnimation('scale') as React.RefObject<HTMLDivElement>;
-  const focusRingRef = useFocusAnimation('ring') as React.RefObject<HTMLButtonElement>;
+  const { isHovered: isHovered1, hoverProps: hoverProps1 } = useHoverAnimation();
+  const { isHovered: isHovered2, hoverProps: hoverProps2 } = useHoverAnimation();
+  const { isFocused, focusProps } = useFocusAnimation();
   
   // Loading state example
-  const showLoading = useLoadingState(isLoading);
+  const { showSpinner, spinnerClass } = useLoadingState(isLoading);
   
   const simulateLoading = () => {
     setIsLoading(true);
@@ -117,14 +118,14 @@ export const AnimationShowcase: React.FC = () => {
         <h2 className="text-2xl font-semibold text-foreground">Count Up Animation</h2>
         <div className="text-center p-8 bg-gradient-to-r from-navy-50 to-navy-100 rounded-xl">
           <div className="text-4xl font-bold text-navy-600 mb-2">
-            <span ref={countRef as React.RefObject<HTMLSpanElement>}>${countValue.toLocaleString()}</span>
+            <span>${countValue.toLocaleString()}</span>
           </div>
           <p className="text-navy-600 mb-4">Total Funding Raised</p>
           <button 
-            onClick={startCount}
+            onClick={() => window.location.reload()}
             className="btn-primary"
           >
-            Start Animation
+            Restart Animation
           </button>
         </div>
       </section>
@@ -140,7 +141,7 @@ export const AnimationShowcase: React.FC = () => {
             Trigger Stagger Animation
           </button>
         </div>
-        <div ref={staggerRef as React.RefObject<HTMLDivElement>} className="stagger-children grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="stagger-children grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
             <div className="w-12 h-12 bg-navy-100 rounded-lg mb-4 flex items-center justify-center">
               <span className="text-navy-600 font-bold">1</span>
@@ -192,7 +193,7 @@ export const AnimationShowcase: React.FC = () => {
             />
             <span className="text-sm font-mono">{progressTarget}%</span>
             <button 
-              onClick={triggerAnimation}
+              onClick={() => setProgressTarget(Math.random() * 100)}
               className="btn-secondary text-sm px-4 py-2"
             >
               Animate
@@ -217,8 +218,8 @@ export const AnimationShowcase: React.FC = () => {
         <h2 className="text-2xl font-semibold text-foreground">Hover Effects</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div 
-            ref={hoverLiftRef}
-            className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer"
+            {...hoverProps1}
+            className={`p-6 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer ${hoverProps1.className}`}
           >
             <h3 className="font-semibold mb-2">Hover Lift</h3>
             <p className="text-sm text-muted-foreground">
@@ -227,8 +228,8 @@ export const AnimationShowcase: React.FC = () => {
           </div>
           
           <div 
-            ref={hoverScaleRef}
-            className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer"
+            {...hoverProps2}
+            className={`p-6 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer ${hoverProps2.className}`}
           >
             <h3 className="font-semibold mb-2">Hover Scale</h3>
             <p className="text-sm text-muted-foreground">
@@ -257,8 +258,8 @@ export const AnimationShowcase: React.FC = () => {
         <h2 className="text-2xl font-semibold text-foreground">Focus Effects</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <button 
-            ref={focusRingRef}
-            className="p-6 bg-white border border-gray-200 rounded-xl shadow-sm text-left"
+            {...focusProps}
+            className={`p-6 bg-white border border-gray-200 rounded-xl shadow-sm text-left ${focusProps.className}`}
           >
             <h3 className="font-semibold mb-2">Animated Focus Ring</h3>
             <p className="text-sm text-muted-foreground">
@@ -285,9 +286,9 @@ export const AnimationShowcase: React.FC = () => {
               className="btn-primary"
               disabled={isLoading}
             >
-              {showLoading ? (
+              {showSpinner ? (
                 <>
-                  <div className="loading-spinner mr-2" />
+                  <div className={`w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2 ${spinnerClass}`} />
                   Loading...
                 </>
               ) : (

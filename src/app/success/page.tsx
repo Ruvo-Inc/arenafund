@@ -1,17 +1,29 @@
-import Link from "next/link";
+'use client';
+
+import React, { Suspense } from 'react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import SuccessContent from '@/components/SuccessContent';
 
 export default function SuccessPage() {
   return (
-    <main className="min-h-screen bg-white text-gray-900">
-      <div className="mx-auto max-w-2xl px-6 py-16 text-center">
-        <h1 className="text-2xl sm:text-3xl font-semibold">Thank you</h1>
-        <p className="mt-4 text-gray-600">
-          Your expression of interest has been received. We’ll review and follow up shortly.
-        </p>
-        <div className="mt-8">
-          <Link href="/" className="text-indigo-600 hover:underline">Return home</Link>
+    <div className="min-h-screen bg-white">
+      <Header />
+      
+      <Suspense fallback={
+        <div className="arena-section">
+          <div className="arena-container text-center">
+            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center animate-pulse">
+              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+            </div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
         </div>
-      </div>
-    </main>
+      }>
+        <SuccessContent />
+      </Suspense>
+      
+      <Footer />
+    </div>
   );
 }

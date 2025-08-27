@@ -55,9 +55,9 @@ export function MultiLayerParallax({
   layers,
   containerClassName = ''
 }: MultiLayerParallaxProps) {
-  const { containerRef, layerStates, shouldAnimate } = useMultiLayerParallax(
-    layers.map(layer => layer.config)
-  );
+  const { containerRef, layerStates, shouldAnimate } = useMultiLayerParallax({
+    layers: layers.map(layer => layer.config)
+  });
 
   return (
     <div ref={containerRef as any} className={`relative ${containerClassName}`}>
